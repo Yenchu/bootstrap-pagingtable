@@ -1,0 +1,24 @@
+.goto-page {
+  padding-left: 5px;
+}
+
+.goto-page input {
+  margin-bottom: 0;
+}
+
+.loading-bar .dropdown-menu {
+  display: block;
+}
+
+.loading-bar .progress {
+  padding: 18px 24px 0 24px;
+}
+
+.sort {
+  margin-top: 8px;
+}
+
+.sort-desc {
+  border-top: 0;
+  border-bottom: 4px solid #000000;
+}
