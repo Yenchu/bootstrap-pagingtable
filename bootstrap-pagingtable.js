@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.1.6
+ * bootstrap-pagingtable.js v0.1.7
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -485,45 +485,43 @@
 			
 			// hide pager if no any records
 			var rowLen = rowDataSet.length;
-			if (rowLen < 1) {
-				$('.paging-bar').addClass('hide');
-				return;
-			} else {
+			if (rowLen > 0) {
+				// update pager if pageable
+				var i = 0, len = rowLen;
+				if (this.options.isPageable) {
+					this.updatePagingElements();
+					
+					i = this.page * this.pageSize;
+					len = i + this.pageSize;
+					(i < 0 || i >= rowLen) && (i = 0);
+					(len < 1 || len > rowLen) && (len = rowLen);
+				}
+				
+				var tbodyContent = '';
+				var colLen = this.colModels.length;
+				for (; i < len; i++) {
+					var rowData = rowDataSet[i];
+					var id = rowData[this.keyName];
+					
+					tbodyContent += '<tr id="' + id + '">';
+					for (var j = 0; j < colLen; j++) {
+						var colModel = this.colModels[j];
+						if (colModel.hidden) {
+							continue;
+						}
+						
+						var tdContent = this.getColContent(rowData, colModel);
+						tbodyContent += '<td>' + tdContent + '</td>';
+					}
+					tbodyContent += '</tr>';
+				}
+				$tbody.html(tbodyContent);
+				
 				var $pagingBar = $('.paging-bar');
 				$pagingBar.hasClass('hide') && $pagingBar.removeClass('hide');
+			} else {
+				$('.paging-bar').addClass('hide');
 			}
-			
-			// update pager if pageable
-			var i = 0, len = rowLen;
-			if (this.options.isPageable) {
-				this.updatePagingElements();
-				
-				i = this.page * this.pageSize;
-				len = i + this.pageSize;
-				(i < 0 || i >= rowLen) && (i = 0);
-				(len < 1 || len > rowLen) && (len = rowLen);
-			}
-			
-			var tbodyContent = '';
-			var colLen = this.colModels.length;
-			for (; i < len; i++) {
-				var rowData = rowDataSet[i];
-				var id = rowData[this.keyName];
-				
-				tbodyContent += '<tr id="' + id + '">';
-				for (var j = 0; j < colLen; j++) {
-					var colModel = this.colModels[j];
-					if (colModel.hidden) {
-						continue;
-					}
-					
-					var tdContent = this.getColContent(rowData, colModel);
-					tbodyContent += '<td>' + tdContent + '</td>';
-				}
-				tbodyContent += '</tr>';
-			}
-			$tbody.html(tbodyContent);
-			
 			this.$element.trigger($.Event('loaded'));
 		}
 		
@@ -948,24 +946,37 @@
 		}
 		
 		, doRestoreRow: function(rowId, $row, $form) {
+			var rowData = null;
 			if (this.isAddingRow(rowId)) {
-				$row.remove();
-				return;
+				if ($form) {
+					rowData = {};
+				} else {
+					$row.remove();
+					return;
+				}
+			} else {
+				rowData = this.getRowData(rowId);
 			}
 			
-			var rowData = this.getRowData(rowId);
+			if ($form) {
+				// just to conserve updated values before updating is complete
+				for (var i = 0, len = this.colModels.length; i < len; i++) {
+					var colModel = this.colModels[i];
+					if (colModel.hidden) {
+						continue;
+					}
+					var newVal = $form.find('[name="' + colModel.name + '"]').val();
+					rowData[colModel.name] = newVal;
+				}
+				this.isAddingRow(rowId) && (this.rowDataMap[rowId] = rowData) ;
+			}
+			
 			var colElems = $row.find('td');
 			var colIdx = -1;
 			for (var i = 0, len = this.colModels.length; i < len; i++) {
 				var colModel = this.colModels[i];
 				if (colModel.hidden) {
 					continue;
-				}
-				
-				// just to conserve updated values before updating is complete
-				if ($form) {
-					var newVal = $form.find('[name="' + colModel.name + '"]').val();
-					rowData[colModel.name] = newVal;
 				}
 				
 				colIdx++;
@@ -1073,13 +1084,13 @@
 				type: type
 			}).done(function(resp) {
 				e = that.isAddingRow(rowId) ? $.Event('added') : $.Event('updated');
-				action == 'update' && (e.rowId = rowId);
+				e.rowId = rowId;
 				e.response = resp;
 				that.$element.trigger(e);
 				!e.isDefaultPrevented() && that.loadRemoteData();
 			}).fail(function(resp) {
 				e = $.Event(action + 'Error');
-				action == 'update' && (e.rowId = rowId);
+				e.rowId = rowId;
 				e.response = resp;
 				that.$element.trigger(e);
 				$.error(action + ' operation failed!');
