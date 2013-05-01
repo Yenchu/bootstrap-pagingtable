@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.1.7
+ * bootstrap-pagingtable.js v0.1.8
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -18,6 +18,7 @@
 		constructor: PagingTable,
 		
 		init: function(element, options) {
+			this.namespace = compName;
 			this.$element = $(element);
 			this.setOptions(options);
 			
@@ -28,15 +29,19 @@
 			this.loadData();
 		}
 	
-		, setOptions: function(newOptions) {
-			this.options = $.extend(true, {}, $.fn.pagingtable.defaults, newOptions);
-			this.namespace = compName, this.colModels = this.options.colModels, this.remote = this.options.remote || {};
-			// disable multi-select when using restful api
-			this.remote.isRest && (this.options.isMultiSelect = false);
-		}
-	
 		, destroy: function() {
 			this.$element.off('.' + this.namespace).removeData(compName).empty();
+		}
+	
+		, getOptions: function() {
+			return this.options;
+		}
+	
+		, setOptions: function(newOptions) {
+			this.options = $.extend(true, {}, $.fn.pagingtable.defaults, newOptions);
+			this.colModels = this.options.colModels || [], this.remote = this.options.remote || {};
+			// disable multi-select when using restful api
+			this.remote.isRest && (this.options.isMultiSelect = false);
 		}
 		
 		, enable: function() {
@@ -117,13 +122,12 @@
 				var $th = $('<th/>', attrs).append(thContent);
 				$tr.append($th);
 			}
-			var $thead = $('<thead class="table-header"/>').appendTo(this.$element);
-			$thead.html($tr);
+			$('<thead class="table-header"/>').html($tr).appendTo(this.$element);
 		}
 		
 		, createPager: function() {
 			var pagerElemName = this.options.pagerLocation === 'top' ? 'thead' : 'tfoot';
-			var $pager = $('<' + pagerElemName + ' />', {'class': 'paging-bar'});
+			var $pager = $('<' + pagerElemName + ' />', {'class': 'table-pager'});
 			
 			// check pager location: thead or tfoot
 			var isDropup;
@@ -135,41 +139,33 @@
 				isDropup = true;
 			}
 			
-			var pageRangeTpl = this.getPageRangeTemplate(this.options.pageRangeTemplate, isDropup);
-			var pagingBtnsTpl = this.getPagingBtnsTemplate(this.options.pagingTemplate, isDropup);
-			
 			var colspan = 0;
 			for (var i = 0, len = this.colModels.length; i < len; i++) {
 				!this.colModels[i].hidden && colspan++;
 			}
-			var tr = '<tr><td colspan="' + colspan + '">' + pageRangeTpl + pagingBtnsTpl + '</td></tr>';
+			var tr = '<tr><td colspan="' + colspan + '">' + this.getPagerContent(this.options.pagerTemplate, isDropup) + '</td></tr>';
 			$pager.html(tr);
 			
 			this.setPageSizeElement();
 			this.setGotoPageElement();
 		}
-	
-		, getPageRangeTemplate: function(tpl, isDropup) {
+		
+		, getPagerContent: function(tpl, isDropup) {
+			var dropup = isDropup ? ' dropup' : '';
 			tpl = tpl.replace('{{fromRecord}}', '<span class="from-record"></span>');
 			tpl = tpl.replace('{{toRecord}}', '<span class="to-record"></span>');
 			tpl = tpl.replace('{{totalRecords}}', '<span class="total-records"></span>');
 			
-			var dropup = isDropup ? ' dropup' : '';
 			tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown" href="#"><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options"></ul></div>');
-			return tpl;
-		}
-	
-		, getPagingBtnsTemplate: function(tpl, isDropup) {
-			var active = this.options.classes.activePagingBtn;
-			tpl = tpl.replace('{{firstButton}}', '<span class="btn-group"><a class="btn goto-first-page" href="#"><i class="icon-fast-backward icon-white"></i></a>');
-			tpl = tpl.replace('{{prevButton}}', '<a class="btn goto-prev-page" href="#"><i class="icon-step-backward icon-white"></i></a></span>');
+		
+			tpl = tpl.replace('{{firstButton}}', '<span class="btn-group">' + this.options.firstButtonTemplate);
+			tpl = tpl.replace('{{prevButton}}', this.options.prevButtonTemplate + '</span>');
 			
-			var dropup = isDropup ? ' dropup' : '';
 			tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown" href="#"><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page"></div></div>');
-			
 			tpl = tpl.replace('{{totalPages}}', '<span class="total-pages"></span>');
-			tpl = tpl.replace('{{nextButton}}', '<span class="btn-group"><a class="btn ' + active + ' goto-next-page" href="#"><i class="icon-step-forward icon-white"></i></a>');
-			tpl = tpl.replace('{{lastButton}}', '<a class="btn ' + active + ' goto-last-page" href="#"><i class="icon-fast-forward icon-white"></i></a></span>');
+			
+			tpl = tpl.replace('{{nextButton}}', '<span class="btn-group">' + this.options.nextButtonTemplate);
+			tpl = tpl.replace('{{lastButton}}', this.options.lastButtonTemplate + '</span>');
 			return tpl;
 		}
 		
@@ -324,7 +320,7 @@
 				var colName = $(this).attr('name');
 				var colModel = that.getColModel(colName);
 				if (colModel.sortable) {
-					that.sortAndReload(colName);
+					that.sort(colName);
 					that.labelSorted($(this));
 				}
 			});
@@ -533,7 +529,7 @@
 			}
 		}
 		
-		, sortAndReload: function(sortCol, sortDir) {
+		, sort: function(sortCol, sortDir) {
 			var asc = this.options.sortDir.asc, desc = this.options.sortDir.desc;
 			if (this.sortCol === sortCol) {
 				this.sortDir = sortDir || this.sortDir === asc ? desc : asc;
@@ -544,13 +540,13 @@
 			
 			if (this.options.localData || this.options.loadOnce) {
 				var rowDataSet = this.getAllRowData();
-				var sortedDataSet = this.sort(rowDataSet, this.sortCol, this.sortDir);
+				this.sortRowData(rowDataSet, this.sortCol, this.sortDir);
 				this.setRowDataMap(sortedDataSet);
 			}
 			this.reload();
 		}
 		
-		, sort: function(rowDataSet, sortCol, sortDir) {
+		, sortRowData: function(rowDataSet, sortCol, sortDir) {
 			var that = this;
 			var colModel = this.getColModel(sortCol);
 			var sortFun;
@@ -577,7 +573,6 @@
 			rowDataSet.sort(function(a, b) {
 				return sortDir === that.options.sortDir.desc ? -sortFun(a, b) : sortFun(a, b);
 			});
-			return rowDataSet;
 		}
 		
 		, labelSorted: function($th) {
@@ -1365,8 +1360,14 @@
 			, deleteRowSubject:'<span class="text-warning"><h4>Are you sure to delete the following record(s)?</h4></span>'
 			, submitButton:'Submit'
 			, cancelButton:'Cancel'},
-		pageRangeTemplate: '<span>View {{fromRecord}} - {{toRecord}} of {{totalRecords}} {{pageSize}} per page</span>',
-		pagingTemplate: '<span class="pull-right">{{firstButton}}{{prevButton}} Page {{currentPage}} of {{totalPages}} {{nextButton}}{{lastButton}}</span>',
+		pagerTemplate: '<span>View {{fromRecord}} - {{toRecord}} of {{totalRecords}} {{pageSize}} per page</span><span class="pull-right">{{firstButton}}{{prevButton}} Page {{currentPage}} of {{totalPages}} {{nextButton}}{{lastButton}}</span>',
+		firstButtonTemplate: '<a class="btn goto-first-page" href="#"><i class="icon-fast-backward icon-white"></i></a>',
+		prevButtonTemplate: '<a class="btn goto-prev-page" href="#"><i class="icon-step-backward icon-white"></i></a>',
+		nextButtonTemplate: '<a class="btn goto-next-page" href="#"><i class="icon-step-forward icon-white"></i></a>',
+		lastButtonTemplate: '<a class="btn goto-last-page" href="#"><i class="icon-fast-forward icon-white"></i></a>',
+		gotoPageTemplate: '<input type="text" class="input-mini paging-value" placeholder="to page">'
+			+ ' <button type="button" class="btn btn-primary btn-small paging-confirm"><i class="icon-ok icon-white"></i></button>'
+			+ ' <button type="button" class="btn btn-small paging-cancel"><i class="icon-remove"></i></button>',
 		editingModalTemplate: '<div class="editing-modal modal hide fade">'
 			+ '<div class="modal-header">'
 			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'
@@ -1377,9 +1378,6 @@
 			+ '<button type="button" class="btn btn-primary editing-submit"></button>'
 			+ '<button type="button" class="btn editing-cancel" data-dismiss="modal" aria-hidden="true"></button>'
 			+ '</div></div></div>',
-		gotoPageTemplate: '<input type="text" class="input-mini paging-value">'
-			+ ' <button type="button" class="btn btn-primary btn-small paging-confirm"><i class="icon-ok icon-white"></i></button>'
-			+ ' <button type="button" class="btn btn-small paging-cancel"><i class="icon-remove"></i></button>',
 		loadingBarTemplate: '<div class="loading-bar dropdown"><div class="dropdown-menu"><div class="progress progress-striped active"><div class="bar" style="width:100%"></div></div></div></div>'
 	};
 
