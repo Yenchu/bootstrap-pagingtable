@@ -69,7 +69,7 @@ remote                  |object      |null            |Settings related to remot
 
 ### paramNames
 
-Default is:
+`paramNames` can be changed to fix your need, default is:
 {page:'page', pageSize:'pageSize', records:'records', totalRecords:'totalRecords', sort:'sort', sortDir:'sortDir'}
 
 ### colModels
@@ -104,19 +104,19 @@ isRest                  |boolean     |false           |The `editUrl` and `delete
 
 ## Methods
 
-### .pagingtable('getSelectedRowId')
+.pagingtable('getSelectedRowId')
 
-### .pagingtable('getSelectedRowIds')
+.pagingtable('getSelectedRowIds')
 
-### .pagingtable('getRowData', rowId)
+.pagingtable('getRowData', rowId)
 
-### .pagingtable('reload')
+.pagingtable('reload')
 
-### .pagingtable('addRow')
+.pagingtable('addRow')
 
-### .pagingtable('updateRow', rowId)
+.pagingtable('updateRow', rowId)
 
-### .pagingtable('deleteRow', {id:'id or key column', displayColName:'column to display in confirm modal', separator:'to separate multiple IDs, default is `,`'})
+.pagingtable('deleteRow', {id:'id or key column', displayColName:'column to display in confirm modal', separator:'to separate multiple IDs, default is `,`'})
 
 ## Events
 
@@ -141,6 +141,6 @@ updated                 |rowId, response    |After sending updated row data to r
 updateError             |rowId, response    |Updating row failed. `rowId` is the id of the updated row.
 delete                  |rowId              |Before sending deleted row id to remote server. `rowId` is the id of the deleted row. If `isMultiSelect` is enabled, rowIds are joined as a string with `,` as a separator.
 deleted                 |rowId, response    |After sending deleted row id to remote server.
-deletError              |rowId, response    |Deleting row failed.
+deleteError             |rowId, response    |Deleting row failed.
 
 =======

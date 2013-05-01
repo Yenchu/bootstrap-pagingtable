@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.1.9
+ * bootstrap-pagingtable.js v0.2.0
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -1128,7 +1128,7 @@
 				that.$element.trigger(e);
 				!e.isDefaultPrevented() && that.loadRemoteData();
 			}).fail(function(resp) {
-				e = $.Event('deletError');
+				e = $.Event('deleteError');
 				e.rowId = toDelId;
 				e.response = resp;
 				that.$element.trigger(e);
