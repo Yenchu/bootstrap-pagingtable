@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.1.8
+ * bootstrap-pagingtable.js v0.1.9
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -541,7 +541,7 @@
 			if (this.options.localData || this.options.loadOnce) {
 				var rowDataSet = this.getAllRowData();
 				this.sortRowData(rowDataSet, this.sortCol, this.sortDir);
-				this.setRowDataMap(sortedDataSet);
+				this.setRowDataMap(rowDataSet);
 			}
 			this.reload();
 		}

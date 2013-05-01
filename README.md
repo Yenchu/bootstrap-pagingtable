@@ -78,7 +78,7 @@ Default is:
 ------------------------|-------------------|----------------|---------------
 editable                |boolean            |false           |To make column editable.
 editor                  |string / function  |null            |To set edit type of column.
-formHidden              |boolean            |false           |To hide this column whem form-editing.
+formHidden              |boolean            |false           |To hide this column in form-editing, not used in inline-editing.
 formatter               |function           |null            |To custom content of column.
 header                  |string             |null            |The table header for this column.
 hidden                  |boolean            |false           |To hide this column.
@@ -96,11 +96,11 @@ width                   |string             |null            |To set column widt
 **Name**                |**Type**    |**Default**     |**Description**
 ------------------------|------------|----------------|---------------
 url                     |string      |null            |To be used to get data from server.
-params                  |string      |null            |To be used to send extra info to server.
+params                  |string      |null            |To be used to send extra data to server.
 method                  |string      |null            |To set HTTP method for `url`.
 editUrl                 |string      |null            |The URL for updating data.
 deleteUrl               |string      |null            |The URL for deleting data.
-isRest                  |boolean     |false           |The `editUrl` and `deleteUrl` are Rest style based on `url`.
+isRest                  |boolean     |false           |The `editUrl` and `deleteUrl` are Rest style based on `url`. It will disable `isMultiSelect`.
 
 ## Methods
 
@@ -116,7 +116,7 @@ isRest                  |boolean     |false           |The `editUrl` and `delete
 
 ### .pagingtable('updateRow', rowId)
 
-### .pagingtable('deleteRow', {`keyName`:'id', displayColName:'name', separator:','});
+### .pagingtable('deleteRow', {id:'id or key column', displayColName:'column to display in confirm modal', separator:'to separate multiple IDs, default is `,`'})
 
 ## Events
 
