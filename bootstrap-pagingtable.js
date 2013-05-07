@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.2.0
+ * bootstrap-pagingtable.js v0.2.1
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -118,7 +118,6 @@
 				} else {
 					thContent = '';
 				}
-				
 				var $th = $('<th/>', attrs).append(thContent);
 				$tr.append($th);
 			}
@@ -234,9 +233,9 @@
 				e.response = resp;
 				that.$element.trigger(e);
 				!e.isDefaultPrevented() && that.parseData(resp);
-			}).fail(function(resp) {
+			}).fail(function(jqXHR) {
 				e = $.Event('remoteLoadError');
-				e.response = resp;
+				e.jqXHR = jqXHR;
 				that.$element.trigger(e);
 				$.error('Loading data from remote failed!');
 			});
@@ -1083,10 +1082,10 @@
 				e.response = resp;
 				that.$element.trigger(e);
 				!e.isDefaultPrevented() && that.loadRemoteData();
-			}).fail(function(resp) {
+			}).fail(function(jqXHR) {
 				e = $.Event(action + 'Error');
 				e.rowId = rowId;
-				e.response = resp;
+				e.jqXHR = jqXHR;
 				that.$element.trigger(e);
 				$.error(action + ' operation failed!');
 			});
@@ -1095,7 +1094,7 @@
 		, doDeleteRow: function(rowId, separator) {
 			var isRest = this.remote.isRest, toDelId;
 			
-			var e = $.Event('delete'), params = {};
+			var e = $.Event('delete');
 			toDelId = isRest ? rowId : rowId.join(separator || ',');
 			e.rowId = toDelId;
 			this.$element.trigger(e);
@@ -1111,8 +1110,9 @@
 				type = 'DELETE';
 			} else {
 				url = this.remote.deleteUrl;
-				data = params;
-				this.remote.params && (data += '&' + $.param(this.remote.params));
+				data = {};
+				data[this.keyName] = toDelId;
+				this.remote.params && $.extend(data, this.remote.params);
 				type = 'POST';
 			}
 			
@@ -1127,10 +1127,10 @@
 				e.response = resp;
 				that.$element.trigger(e);
 				!e.isDefaultPrevented() && that.loadRemoteData();
-			}).fail(function(resp) {
+			}).fail(function(jqXHR) {
 				e = $.Event('deleteError');
 				e.rowId = toDelId;
-				e.response = resp;
+				e.jqXHR = jqXHR;
 				that.$element.trigger(e);
 				$.error('Delete operation failed!');
 			});

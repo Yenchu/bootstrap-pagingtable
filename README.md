@@ -126,7 +126,7 @@ created                 |                   |After table is created(include head
 localLoaded             |                   |Before loading data to table.
 remoteLoad              |                   |Before remote loading data.
 remoteLoaded            |response           |After remote loading data but before loading data to table. `response` is the response from remote server.
-remoteLoadError         |response           |Remote loading failed. `response` is the response from remote server.
+remoteLoadError         |jqXHR              |Remote loading failed. `response` is the response from remote server.
 load                    |rowDataSet         |Before loading data to table (sorting and paging will trigger this event). `rowDataSet` is the row data array.
 loaded                  |                   |After loading data to table.
 clickRow                |rowId              |Click a row. `rowId` is the id of the clicked row.
@@ -135,12 +135,12 @@ contextmenuRow          |rowId              |Right click a row.
 blur                    |                   |Click out of table.
 add                     |form               |Before sending added row data to remote server. `form` is a jQuery object containing added data.
 added                   |response           |After sending added row data to remote server. `response` is the response from remote server.
-addError                |response           |Adding row failed. `response` is the response from remote server.
+addError                |jqXHR              |Adding row failed. `response` is the response from remote server.
 update                  |form               |Before sending updated row data to remote server. `form` is a jQuery object containing updated data.
 updated                 |rowId, response    |After sending updated row data to remote server. `rowId` is the id of the updated row.
-updateError             |rowId, response    |Updating row failed. `rowId` is the id of the updated row.
+updateError             |rowId, jqXHR       |Updating row failed. `rowId` is the id of the updated row.
 delete                  |rowId              |Before sending deleted row id to remote server. `rowId` is the id of the deleted row. If `isMultiSelect` is enabled, rowIds are joined as a string with `,` as a separator.
 deleted                 |rowId, response    |After sending deleted row id to remote server.
-deleteError             |rowId, response    |Deleting row failed.
+deleteError             |rowId, jqXHR       |Deleting row failed.
 
 =======
