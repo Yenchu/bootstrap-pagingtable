@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.2.1
+ * bootstrap-pagingtable.js v0.2.2
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -242,28 +242,21 @@
 		}
 		
 		, startLoading: function() {
-			var $element = this.$element, $placeholder = this.$element.parent() || $(document.body);
-			$placeholder.find('.loading-bar').remove();
 			this.disable();
-			
-			var $loadindBar = $(this.options.loadingBarTemplate);
-			$loadindBar.appendTo($placeholder);
+			var $element = this.$element, $placeholder = $element.parent() || $(document.body);
+			var $loadindSpinner = $(this.options.loadingSpinnerTemplate);
+			$loadindSpinner.appendTo($placeholder);
 
-			var progress = $loadindBar.find('.progress'), w = 0, h = 0;
-			if (progress.length > 0) {
-				var $progress = $(progress[0]);
-				w = $element.width() / 2 - $progress.outerWidth() / 2, h = $element.height() / 2 - $progress.outerHeight() / 2;
-			} else {
-				w = $element.width() / 2, h = $element.height() / 2 - $loadindBar.height() / 2;
-			}
-
-			var x = $element.offset().left + w, y = $element.offset().top + h;
-			$loadindBar.offset({top:y, left:x});
+			var w = $element.width() / 2 - $loadindSpinner.width() / 2;
+			var h = $element.height() / 2 - $loadindSpinner.height() / 2;
+			var x = $element.offset().left + w;
+			var y = $element.offset().top + h;
+			$loadindSpinner.offset({top:y, left:x});
 		}
 		
 		, stopLoading: function() {
 			var $placeholder = this.$element.parent() || $(document.body);
-			$placeholder.find('.loading-bar').remove();
+			$placeholder.find('.loading-spinner').remove();
 			this.enable();
 		}
 		
@@ -942,18 +935,18 @@
 		, doRestoreRow: function(rowId, $row, $form) {
 			var rowData = null;
 			if (this.isAddingRow(rowId)) {
-				if ($form) {
-					rowData = {};
-				} else {
+				if (!$form) {
+					// discard edited data
 					$row.remove();
 					return;
 				}
+				rowData = {};
 			} else {
 				rowData = this.getRowData(rowId);
 			}
 			
 			if ($form) {
-				// just to conserve updated values before updating is complete
+				// just to conserve edited data before updating is complete
 				for (var i = 0, len = this.colModels.length; i < len; i++) {
 					var colModel = this.colModels[i];
 					if (colModel.hidden) {
@@ -1000,7 +993,7 @@
 			$form.find('[name="' + this.keyName + '"]').length < 1 && $form.append('<input type="hidden" name="' + this.keyName + '" value="' + rowId + '" >');
 			this.doSaveRow(rowId, $form);
 			
-			// restore with modified values for temporary display before updating resp
+			// restore with edited data before updating is complete
 			this.doRestoreRow(rowId, $row, $form);
 		}
 		
@@ -1009,7 +1002,6 @@
 				return;
 			}
 			
-			settings = settings || {separator:','};
 			var rowId = settings[this.keyName];
 			if (!rowId || rowId.length < 1) {
 				return;
@@ -1072,10 +1064,13 @@
 			var that = this;
 			var data = $form.serialize();
 			this.remote.params && (data += '&' + $.param(this.remote.params));
+			this.startLoading();
 			$.ajax({
 				url: url,
 				data: data,
 				type: type
+			}).always(function() {
+				that.stopLoading();
 			}).done(function(resp) {
 				e = that.isAddingRow(rowId) ? $.Event('added') : $.Event('updated');
 				e.rowId = rowId;
@@ -1117,10 +1112,13 @@
 			}
 			
 			var that = this;
+			this.startLoading();
 			$.ajax({
 				url: url,
 				data: data,
-				type: type 
+				type: type
+			}).always(function() {
+				that.stopLoading();
 			}).done(function(resp) {
 				e = $.Event('deleted');
 				e.rowId = toDelId;
@@ -1378,7 +1376,7 @@
 			+ '<button type="button" class="btn btn-primary editing-submit"></button>'
 			+ '<button type="button" class="btn editing-cancel" data-dismiss="modal" aria-hidden="true"></button>'
 			+ '</div></div></div>',
-		loadingBarTemplate: '<div class="loading-bar dropdown"><div class="dropdown-menu"><div class="progress progress-striped active"><div class="bar" style="width:100%"></div></div></div></div>'
+		loadingSpinnerTemplate: '<div class="loading-spinner" />'
 	};
 
 	$.fn.pagingtable.Constructor = PagingTable;
