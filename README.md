@@ -9,14 +9,14 @@ bootstrap-pagingtable.js is a jQuery plugin for Twitter Bootstrap that renders d
 
 ## Demo
 
-[Demo site](http://mysamples.cloudfoundry.com/pagingtable)
+[Demo site](http://samples-yenchu.rhcloud.com/pagingtable)
 
 ## Usage
 
 Include required css and js files:
 
     <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/js/bootstrap.min.js"></script>
 
 Include pagingtable css and js files:
