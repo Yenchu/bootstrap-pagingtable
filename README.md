@@ -2,10 +2,12 @@
 
 bootstrap-pagingtable.js is a jQuery plugin for Twitter Bootstrap that renders data in a table with paging, sorting and editing.
 
+
 ## Requirements
 
-* [jQuery](http://jquery.com/) v 1.8+
-* [Bootstrap](http://twitter.github.com/bootstrap/index.html) v 2.2+
+* [jQuery](http://jquery.com/) v1.8+
+* [Bootstrap](http://twitter.github.com/bootstrap/index.html) v3.0+
+  (bootstrap-v2-pagingtable.js is for Bootstrap v2)
 
 ## Demo
 
@@ -15,9 +17,9 @@ bootstrap-pagingtable.js is a jQuery plugin for Twitter Bootstrap that renders d
 
 Include required css and js files:
 
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-    <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/js/bootstrap.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 
 Include pagingtable css and js files:
 
