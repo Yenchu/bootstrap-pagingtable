@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.2.4
+ * bootstrap-pagingtable.js v0.2.5
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -1255,13 +1255,20 @@
 			return elem;
 		}
 		
-		, getCheckboxElement: function(colModel, checkVal) {
+		, getCheckboxElement: function(colModel, checkVals) {
 			var elem = '', options = this.getColOptions(colModel);
-			checkVal && (checkVal = checkVal.toString());
 			for(var value in options) {
 				var label = options[value];
-				var cb = '<input type="checkbox" name="' + colModel.name + '" value="' + value + (value == checkVal ? '" checked="checked">' : '">') + label;
-				elem += '<label class="checkbox inline">' + cb + '</label>';
+				var checked = '"';
+				for (var i = 0, len = checkVals.length; i < len; i++) {
+					var checkVal = checkVals[i];
+					if (value == checkVal) {
+						checked = '" checked="checked"';
+						break;
+					}
+				}
+				var cb = '<input type="checkbox" name="' + colModel.name + '" value="' + value + checked + '>' + label;
+				elem += '<label class="checkbox-inline">' + cb + '</label>';
 			}
 			return elem;
 		}
