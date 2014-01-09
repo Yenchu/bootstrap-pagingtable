@@ -27,10 +27,10 @@
 			, submitButton:'Submit'
 			, cancelButton:'Cancel'}
 		, pagerTemplate: '<span>View {{fromRecord}} - {{toRecord}} of {{totalRecords}} {{pageSize}} per page</span><span class="pull-right">{{firstButton}}{{prevButton}} Page {{currentPage}} of {{totalPages}} {{nextButton}}{{lastButton}}</span>'
-		, firstButtonTemplate: '<a class="btn btn-primary goto-first-page" href="#"><span class="glyphicon glyphicon-fast-backward" /></a>'
-		, prevButtonTemplate: '<a class="btn btn-primary goto-prev-page" href="#"><span class="glyphicon glyphicon-backward" /></a>'
-		, nextButtonTemplate: '<a class="btn btn-primary goto-next-page" href="#"><span class="glyphicon glyphicon-forward" /></a>'
-		, lastButtonTemplate: '<a class="btn btn-primary goto-last-page" href="#"><span class="glyphicon glyphicon-fast-forward" /></a>'
+		, firstButtonTemplate: '<a class="btn btn-primary goto-first-page" href=""><span class="glyphicon glyphicon-fast-backward" /></a>'
+		, prevButtonTemplate: '<a class="btn btn-primary goto-prev-page" href=""><span class="glyphicon glyphicon-backward" /></a>'
+		, nextButtonTemplate: '<a class="btn btn-primary goto-next-page" href=""><span class="glyphicon glyphicon-forward" /></a>'
+		, lastButtonTemplate: '<a class="btn btn-primary goto-last-page" href=""><span class="glyphicon glyphicon-fast-forward" /></a>'
 		, gotoPageTemplate: '<input type="text" class="input-sm col-md-6 paging-value" placeholder="gotoPage">'
 			+ ' <button type="button" class="btn btn-primary btn-sm paging-confirm"><span class="glyphicon glyphicon-ok" /></button>'
 			+ ' <button type="button" class="btn btn-sm paging-cancel"><span class="glyphicon glyphicon-remove" /></button>'
@@ -184,12 +184,12 @@
 		tpl = tpl.replace('{{toRecord}}', '<span class="to-record"></span>');
 		tpl = tpl.replace('{{totalRecords}}', '<span class="total-records"></span>');
 		
-		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown" href="#"><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
+		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown" href=""><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
 	
 		tpl = tpl.replace('{{firstButton}}', '<span class="btn-group">' + this.options.firstButtonTemplate);
 		tpl = tpl.replace('{{prevButton}}', this.options.prevButtonTemplate + '</span>');
 		
-		tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown" href="#"><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page" role="menu"></div></div>');
+		tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown" href=""><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page" role="menu"></div></div>');
 		tpl = tpl.replace('{{totalPages}}', '<span class="total-pages"></span>');
 		
 		tpl = tpl.replace('{{nextButton}}', '<span class="btn-group">' + this.options.nextButtonTemplate);
@@ -201,7 +201,7 @@
 		var options = this.options;
 		var sizeOptions = '';
 		for (var i = 0, len = options.pageSizeOptions.length; i < len; i++) {
-			sizeOptions += '<li><a href="#">' + options.pageSizeOptions[i] + '</a></li>';
+			sizeOptions += '<li><a href="">' + options.pageSizeOptions[i] + '</a></li>';
 		}
 		this.$element.find('.page-size-options').html(sizeOptions);
 	};
