@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.3.1
+ * bootstrap-pagingtable.js v0.3.2
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -55,7 +55,11 @@
 		this.page = 0, this.pageSize = 0, this.totalPages = 0, this.totalRecords = 0, this.sortCol, this.sortDir;
 		
 		this.createTable();
-		this.loadData();
+		
+		// a flag to let user load data on demand
+		if (this.options.loadingDataOnInit || this.options.loadingDataOnInit === undefined) {
+			this.loadData();
+		}
 	};
 	
 	PagingTable.prototype.destroy = function() {
@@ -767,7 +771,9 @@
 	
 	PagingTable.prototype.addSelectedRow = function($row) {
 		this.highlightSelectedRow($row);
-		this.selRowIds.push(this.getRowId($row));
+		var rowId = this.getRowId($row);
+		this.selRowIds.push(rowId);
+		this.$element.trigger({type:'selectRow', rowId:rowId});
 	};
 	
 	PagingTable.prototype.highlightSelectedRow = function($row) {
