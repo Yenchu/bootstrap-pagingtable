@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.3.2
+ * bootstrap-pagingtable.js v0.3.3
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -20,28 +20,30 @@
 		, pagerLocation: 'bottom'
 		, paramNames: {page:'page', pageSize:'pageSize', records:'records', totalRecords:'totalRecords', sort:'sort', sortDir:'sortDir'}
 		, sortDir: {asc:'asc', desc:'desc'}
-		, texts: {addRowTitle:'Add Record'
+		, texts: {
+			noDataMsg:'<br/>No Data'
+			, addRowTitle:'Add Record'
 			, updateRowTitle:'Update Record'
 			, deleteRowTitle:'Delete Record'
 			, deleteRowSubject:'<span class="text-warning"><h4>Are you sure to delete the following record(s)?</h4></span>'
 			, submitButton:'Submit'
 			, cancelButton:'Cancel'}
 		, pagerTemplate: '<span>View {{fromRecord}} - {{toRecord}} of {{totalRecords}} {{pageSize}} per page</span><span class="pull-right">{{firstButton}}{{prevButton}} Page {{currentPage}} of {{totalPages}} {{nextButton}}{{lastButton}}</span>'
-		, firstButtonTemplate: '<a class="btn btn-primary goto-first-page" href=""><span class="glyphicon glyphicon-fast-backward" /></a>'
-		, prevButtonTemplate: '<a class="btn btn-primary goto-prev-page" href=""><span class="glyphicon glyphicon-backward" /></a>'
-		, nextButtonTemplate: '<a class="btn btn-primary goto-next-page" href=""><span class="glyphicon glyphicon-forward" /></a>'
-		, lastButtonTemplate: '<a class="btn btn-primary goto-last-page" href=""><span class="glyphicon glyphicon-fast-forward" /></a>'
+		, firstButtonTemplate: '<a class="btn btn-primary goto-first-page"><span class="glyphicon glyphicon-fast-backward" /></a>'
+		, prevButtonTemplate: '<a class="btn btn-primary goto-prev-page"><span class="glyphicon glyphicon-backward" /></a>'
+		, nextButtonTemplate: '<a class="btn btn-primary goto-next-page"><span class="glyphicon glyphicon-forward" /></a>'
+		, lastButtonTemplate: '<a class="btn btn-primary goto-last-page"><span class="glyphicon glyphicon-fast-forward" /></a>'
 		, gotoPageTemplate: '<input type="text" class="input-sm col-md-6 paging-value" placeholder="gotoPage">'
 			+ ' <button type="button" class="btn btn-primary btn-sm paging-confirm"><span class="glyphicon glyphicon-ok" /></button>'
 			+ ' <button type="button" class="btn btn-sm paging-cancel"><span class="glyphicon glyphicon-remove" /></button>'
-		, editingModalTemplate: '<div class="modal fade editing-modal"><div class="modal-dialog"><div class="modal-content">'
+		, editingModalTemplate: '<div class="modal fade editing-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content">'
 			+ '<div class="modal-header">'
 			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'
 			+ '<h4 class="modal-title editing-title"></h4></div>'
 			+ '<div class="modal-body"></div>'
 			+ '<div class="modal-footer">'
 			+ '<button type="button" class="btn btn-default editing-cancel" data-dismiss="modal"></button>'
-			+ '<button type="button" class="btn btn-primary editing-submit"></button>'
+			+ '<button type="button" class="btn btn-primary editing-submit" data-dismiss="modal"></button>'
 			+ '</div></div></div></div>'
 		, loadingSpinnerTemplate: '<div class="loading-spinner" />'
 	};
@@ -50,14 +52,14 @@
 		this.namespace = compName;
 		this.$element = $(element);
 		this.setOptions(options);
-		
-		this.rowDataMap = {}, this.selRowIds = [], this.keyName, this.editedRowId, this.newRowId, this.optionsUrlCache = {};
+		//this.rowDataMap = {}; // try to replace rowDataMap with rowDataSet
+		this.rowDataSet = [], this.selRowIds = [], this.keyName, this.editedRowId, this.newRowId, this.optionsUrlCache = {};
 		this.page = 0, this.pageSize = 0, this.totalPages = 0, this.totalRecords = 0, this.sortCol, this.sortDir;
 		
 		this.createTable();
 		
 		// a flag to let user load data on demand
-		if (this.options.loadingDataOnInit || this.options.loadingDataOnInit === undefined) {
+		if (this.options.loadingDataOnInit) {
 			this.loadData();
 		}
 	};
@@ -72,7 +74,9 @@
 
 	PagingTable.prototype.setOptions = function(newOptions) {
 		this.options = $.extend(true, {}, PagingTable.DEFAULTS, newOptions);
-		this.colModels = this.options.colModels || [], this.remote = this.options.remote || {};
+		this.colModels = this.options.colModels || [];
+		this.remote = this.options.remote || {};
+		this.options.loadingDataOnInit === undefined && (this.options.loadingDataOnInit = true);
 		// disable multi-select when using restful api
 		this.remote.isRest && (this.options.isMultiSelect = false);
 	};
@@ -188,12 +192,12 @@
 		tpl = tpl.replace('{{toRecord}}', '<span class="to-record"></span>');
 		tpl = tpl.replace('{{totalRecords}}', '<span class="total-records"></span>');
 		
-		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown" href=""><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
+		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown"><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
 	
 		tpl = tpl.replace('{{firstButton}}', '<span class="btn-group">' + this.options.firstButtonTemplate);
 		tpl = tpl.replace('{{prevButton}}', this.options.prevButtonTemplate + '</span>');
 		
-		tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown" href=""><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page" role="menu"></div></div>');
+		tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown"><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page" role="menu"></div></div>');
 		tpl = tpl.replace('{{totalPages}}', '<span class="total-pages"></span>');
 		
 		tpl = tpl.replace('{{nextButton}}', '<span class="btn-group">' + this.options.nextButtonTemplate);
@@ -205,7 +209,7 @@
 		var options = this.options;
 		var sizeOptions = '';
 		for (var i = 0, len = options.pageSizeOptions.length; i < len; i++) {
-			sizeOptions += '<li><a href="">' + options.pageSizeOptions[i] + '</a></li>';
+			sizeOptions += '<li><a>' + options.pageSizeOptions[i] + '</a></li>';
 		}
 		this.$element.find('.page-size-options').html(sizeOptions);
 	};
@@ -315,7 +319,7 @@
 			}
 		}
 		
-		this.setRowDataMap(rowDataSet);
+		this.setRowData(rowDataSet);
 		this.load();
 	};
 	
@@ -540,6 +544,7 @@
 			var $pagingBar = $('.paging-bar');
 			$pagingBar.hasClass('hide') && $pagingBar.removeClass('hide');
 		} else {
+			$tbody.html(this.options.texts.noDataMsg);
 			$('.paging-bar').addClass('hide');
 		}
 		this.$element.trigger($.Event('loaded'));
@@ -565,7 +570,7 @@
 		if (this.options.localData || this.options.loadOnce) {
 			var rowDataSet = this.getAllRowData();
 			this.sortRowData(rowDataSet, this.sortCol, this.sortDir);
-			this.setRowDataMap(rowDataSet);
+			this.setRowData(rowDataSet);
 		}
 		this.reload();
 	};
@@ -605,15 +610,6 @@
 		this.sortDir === this.options.sortDir.desc && (sortStyle = ' sort-desc');
 		var label = ' <span class="caret' + sortStyle + '"></span>';
 		$th.append(label);
-	};
-	
-	PagingTable.prototype.setRowDataMap = function(rowDataSet) {
-		this.rowDataMap = {};
-		for (var i = 0, len = rowDataSet.length; i < len; i++) {
-			var rowData = rowDataSet[i];
-			var key = rowData[this.keyName];
-			this.rowDataMap[key] = rowData;
-		}
 	};
 	
 	PagingTable.prototype.getColModel = function(colName) {
@@ -821,8 +817,62 @@
 		return this.selRowIds;
 	};
 	
+	PagingTable.prototype.setRowData = function(rowDataSet) {
+		/*this.rowDataMap = {};
+		for (var i = 0, len = rowDataSet.length; i < len; i++) {
+			var rowData = rowDataSet[i];
+			var key = rowData[this.keyName];
+			this.rowDataMap[key] = rowData;
+		}*/
+		this.rowDataSet = rowDataSet;
+	};
+	
+	PagingTable.prototype.hasRowData = function() {
+		return this.rowDataSet.length > 0 ? true : false;
+	};
+	
+	PagingTable.prototype.addRowData = function(rowData) {
+		//this.rowDataMap[rowId] = rowData;
+		this.rowDataSet.push(rowData);
+	};
+	
+	PagingTable.prototype.removeRowData = function(rowId) {
+		/*for(var key in this.rowDataMap) {
+			if (rowId == key) {
+				delete this.rowDataMap[key];
+				break;
+			}
+		}*/
+		for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
+			var rowData = this.rowDataSet[i];
+			var key = rowData[this.keyName];
+			if (rowId == key) {
+				this.rowDataSet.splice(i, 1);
+				break;
+			}
+		}
+	};
+	
 	PagingTable.prototype.getRowData = function(rowId) {
-		return this.rowDataMap[rowId];
+		//return this.rowDataMap[rowId];
+		for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
+			var rowData = this.rowDataSet[i];
+			var key = rowData[this.keyName];
+			if (rowId == key) {
+				return rowData;
+			}
+		}
+		return null;
+	};
+	
+	PagingTable.prototype.getAllRowData = function() {
+		/*var rowDataSet = [];
+		for(var key in this.rowDataMap) {
+			var rowData = this.rowDataMap[key];
+			rowDataSet.push(rowData);
+		}
+		return rowDataSet;*/
+		return this.rowDataSet;
 	};
 	
 	PagingTable.prototype.getSelectedRowData = function() {
@@ -831,7 +881,7 @@
 		}
 		
 		var rowId = this.selRowIds[this.selRowIds.length - 1];
-		return this.rowDataMap[rowId];
+		return this.getRowData(rowId);
 	};
 	
 	PagingTable.prototype.getMultiSelectedRowData = function() {
@@ -842,16 +892,7 @@
 		var rowDataSet = [];
 		for (var i = 0, len = this.selRowIds.length; i < len; i++) {
 			var rowId = this.selRowIds[i];
-			var rowData = this.rowDataMap[rowId];
-			rowDataSet.push(rowData);
-		}
-		return rowDataSet;
-	};
-	
-	PagingTable.prototype.getAllRowData = function() {
-		var rowDataSet = [];
-		for(var key in this.rowDataMap) {
-			var rowData = this.rowDataMap[key];
+			var rowData = this.getRowData(rowId);
 			rowDataSet.push(rowData);
 		}
 		return rowDataSet;
@@ -1002,7 +1043,7 @@
 	};
 	
 	PagingTable.prototype.doSaveRow = function(rowId, $form) {
-		if (this.options.localData || this.options.inlineEditing) {
+		if (this.options.inlineEditing || this.options.localData) {
 			var rowData = this.isAddingRow(rowId) ? {} : this.getRowData(rowId);
 			for (var i = 0, len = this.colModels.length; i < len; i++) {
 				var colModel = this.colModels[i];
@@ -1013,7 +1054,7 @@
 				var newVal = $form.find('[name="' + colModel.name + '"]').val();
 				newVal && (rowData[colModel.name] = newVal);
 			}
-			this.isAddingRow(rowId) && (this.rowDataMap[rowId] = rowData) ;
+			this.isAddingRow(rowId) && (this.addRowData(rowData));
 		}
 		
 		if (this.options.inlineEditing) {
@@ -1022,7 +1063,11 @@
 		}
 		
 		if (this.options.localData) {
-			this.load();
+			// add events for editing local data
+			var e = this.isAddingRow(rowId) ? $.Event('added') : $.Event('updated');
+			e.rowId = rowId;
+			this.$element.trigger(e);
+			!e.isDefaultPrevented() && this.load();
 			return;
 		}
 		
@@ -1105,48 +1150,44 @@
 		
 		var that = this;
 		$modal.find('.editing-submit').off('click').on('click', function(e) {
-			that.remote.isRest ? that.doDeleteRow(rowIds) : that.doDeleteRow(rowIds, settings.separator);
+			that.doDeleteRow(rowIds, settings);
 			$modal.modal('hide');
 		});
 	};
 	
-	PagingTable.prototype.doDeleteRow = function(rowIds, separator) {
+	PagingTable.prototype.doDeleteRow = function(rowIds, settings) {
+		settings = settings || {};
 		if (this.options.localData) {
 			for (var i = 0, len = rowIds.length; i < len; i++) {
-				var rid = rowIds[i];
-				for(var key in this.rowDataMap) {
-					if (rid == key) {
-						delete this.rowDataMap[key];
-						break;
-					}
-				}
+				var rowId = rowIds[i];
+				this.removeRowData(rowId);
 			}
-			this.load();
+			
+			// add event for deleting local data
+			var e = $.Event('deleted');
+			this.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
+			this.$element.trigger(e);
+			!e.isDefaultPrevented() && this.load();
 			return;
 		}
 		
-		var isRest = this.remote.isRest;
-		
 		var e = $.Event('delete');
-		var toDelId = rowIds.join(separator || ',');
-		e.rowId = toDelId;
+		this.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
 		this.$element.trigger(e);
 		if (e.isDefaultPrevented()) {
 			this.loadRemoteData();
 			return;
 		}
 		
-		var url, data, type;
-		if (isRest) {
-			url = this.addIdToUrl(this.remote.url, toDelId);
-			data = this.remote.params ? $.param(this.remote.params) : {};
+		var url, type;
+		var data = this.remote.params || {};
+		if (this.remote.isRest) {
+			url = this.addIdToUrl(this.remote.url, rowIds[0]);
 			type = 'DELETE';
 		} else {
 			url = this.remote.deleteUrl;
-			data = {};
-			data[this.keyName] = toDelId;
-			this.remote.params && $.extend(data, this.remote.params);
-			type = 'POST';
+			data[settings.paramName || this.keyName] = this.options.isMultiSelect ? rowIds : rowIds[0];
+			type = settings.method || 'POST';
 		}
 		
 		var that = this;
@@ -1159,13 +1200,13 @@
 			that.stopLoading();
 		}).done(function(resp) {
 			e = $.Event('deleted');
-			e.rowId = toDelId;
+			that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
 			e.response = resp;
 			that.$element.trigger(e);
 			!e.isDefaultPrevented() && that.loadRemoteData();
 		}).fail(function(jqXHR) {
 			e = $.Event('deleteError');
-			e.rowId = toDelId;
+			that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
 			e.jqXHR = jqXHR;
 			that.$element.trigger(e);
 			$.error('Delete operation failed!');

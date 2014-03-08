@@ -28,7 +28,7 @@ Include pagingtable css and js files:
 
 Create a place holder in your HTML page:
 
-    <div><table id="sample-table" class="table table-striped table-bordered"></table></div>
+    <div><table id="sample-table" class="table"></table></div>
 
 Configure your table:
 
@@ -62,6 +62,7 @@ colModels               |array       |null            |To configure how the tabl
 inlineEditing           |boolean     |false           |To enable inline editing.
 isMultiSelect           |boolean     |false           |To select multi-rows.
 isPageable              |boolean     |false           |To make the table pageable.
+loadingDataOnInit       |boolean     |true            |If `true`, data will be loaded after the table is created.
 loadOnce                |boolean     |false           |If `true`, data will be loaded from remote only once.
 localData               |object      |null            |To load local data to table, not from remote.
 pageSizeOptions         |array       |10, 20, 50      |To set how many records should be displayed in the table.
@@ -112,37 +113,48 @@ isRest                  |boolean     |false           |The `editUrl` and `delete
 
 .pagingtable('getRowData', rowId)
 
+.pagingtable('getAllRowData')
+
+.pagingtable('getSelectedRowData')
+
+.pagingtable('getMultiSelectedRowData')
+
 .pagingtable('reload')
 
 .pagingtable('addRow')
 
 .pagingtable('updateRow', rowId)
 
-.pagingtable('deleteRow', {id:'id or key column', displayColName:'column to display in confirm modal', separator:'to separate multiple IDs, default is `,`'})
+.pagingtable('deleteRow', {id:'id or key column', 
+                           displayColName:'column to display in confirm modal', 
+                           separator:'to separate multiple row IDs, default is `,`', 
+                           paramName:'parameter to be sent to server, default is `id or key name`', 
+                           method:'HTTP method, default is `POST`'})
+(`separator`, `paramName` and `method` are ignored when `remote.isRest` is true)
 
 ## Events
 
-**Event**               |**Parameters**     |**Description**
-------------------------|-------------------|-----------------------
-created                 |                   |After table is created(include header and pager).
-localLoaded             |                   |Before loading data to table.
-remoteLoad              |                   |Before remote loading data.
-remoteLoaded            |response           |After remote loading data but before loading data to table. `response` is the response from remote server.
-remoteLoadError         |jqXHR              |Remote loading failed. `response` is the response from remote server.
-load                    |rowDataSet         |Before loading data to table (sorting and paging will trigger this event). `rowDataSet` is the row data array.
-loaded                  |                   |After loading data to table.
-clickRow                |rowId              |Click a row. `rowId` is the id of the clicked row.
-dblclickRow             |rowId              |Double click a row.
-contextmenuRow          |rowId              |Right click a row.
-blur                    |                   |Click out of table.
-add                     |form               |Before sending added row data to remote server. `form` is a jQuery object containing added data.
-added                   |response           |After sending added row data to remote server. `response` is the response from remote server.
-addError                |jqXHR              |Adding row failed. `response` is the response from remote server.
-update                  |form               |Before sending updated row data to remote server. `form` is a jQuery object containing updated data.
-updated                 |rowId, response    |After sending updated row data to remote server. `rowId` is the id of the updated row.
-updateError             |rowId, jqXHR       |Updating row failed. `rowId` is the id of the updated row.
-delete                  |rowId              |Before sending deleted row id to remote server. `rowId` is the id of the deleted row. If `isMultiSelect` is enabled, rowIds are joined as a string with `,` as a separator.
-deleted                 |rowId, response    |After sending deleted row id to remote server.
-deleteError             |rowId, jqXHR       |Deleting row failed.
+**Event**               |**Parameters**         |**Description**
+------------------------|-----------------------|-----------------------
+created                 |                       |After table is created(include header and pager).
+localLoaded             |                       |Before loading data to table.
+remoteLoad              |                       |Before remote loading data.
+remoteLoaded            |response               |After remote loading data but before loading data to table. `response` is the response from remote server.
+remoteLoadError         |jqXHR                  |Remote loading failed. `response` is the response from remote server.
+load                    |rowDataSet             |Before loading data to table (sorting and paging will trigger this event). `rowDataSet` is the row data array.
+loaded                  |                       |After loading data to table.
+clickRow                |rowId                  |Click a row. `rowId` is the id of the clicked row.
+dblclickRow             |rowId                  |Double click a row.
+contextmenuRow          |rowId                  |Right click a row.
+blur                    |                       |Click out of table.
+add                     |form                   |Before sending added row data to remote server. `form` is a jQuery object containing added data.
+added                   |response               |After sending added row data to remote server. `response` is the response from remote server.
+addError                |jqXHR                  |Adding row failed. `response` is the response from remote server.
+update                  |form                   |Before sending updated row data to remote server. `form` is a jQuery object containing updated data.
+updated                 |rowId, response        |After sending updated row data to remote server. `rowId` is the id of the updated row.
+updateError             |rowId, jqXHR           |Updating row failed. `rowId` is the id of the updated row.
+delete                  |rowId/rowIds           |Before sending deleted row id to remote server. `rowId` is the id of the deleted row. If `isMultiSelect` is enabled, use `rowIds` to get the ids of the deleted rows.
+deleted                 |rowId/rowIds, response |After sending deleted row id to remote server.
+deleteError             |rowId/rowIds, jqXHR    |Deleting row failed.
 
 =======
