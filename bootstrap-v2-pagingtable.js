@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.2.7
+ * bootstrap-pagingtable.js v0.2.8
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -19,6 +19,8 @@
 		
 		init: function(element, options) {
 			this.namespace = compName;
+			this.headerClassName = 'table-header';
+			this.pagerClassName = 'table-pager';
 			this.$element = $(element);
 			this.setOptions(options);
 			
@@ -127,12 +129,12 @@
 				var $th = $('<th/>', attrs).append(thContent);
 				$tr.append($th);
 			}
-			$('<thead class="table-header"/>').html($tr).appendTo(this.$element);
+			$('<thead class="' + this.headerClassName + '"/>').html($tr).appendTo(this.$element);
 		}
 		
 		, createPager: function() {
 			var pagerElemName = this.options.pagerLocation === 'top' ? 'thead' : 'tfoot';
-			var $pager = $('<' + pagerElemName + ' />', {'class': 'table-pager'});
+			var $pager = $('<' + pagerElemName + ' />', {'class': this.pagerClassName});
 			
 			// check pager location: thead or tfoot
 			var isDropup;
@@ -194,9 +196,9 @@
 		, loadData: function() {
 			var options = this.options;
 			if (options.localData) {
+				this.parseData(options.localData);
 				var e = $.Event('localLoaded');
 				this.$element.trigger(e);
-				!e.isDefaultPrevented() && this.parseData(options.localData);
 			} else {
 				this.loadRemoteData();
 			}
@@ -510,11 +512,11 @@
 				}
 				$tbody.html(tbodyContent);
 				
-				var $pagingBar = $('.paging-bar');
+				var $pagingBar = $('.' + this.pagerClassName);
 				$pagingBar.hasClass('hide') && $pagingBar.removeClass('hide');
 			} else {
 				$tbody.html(this.options.texts.noDataMsg);
-				$('.paging-bar').addClass('hide');
+				$('.' + this.pagerClassName).addClass('hide');
 			}
 			this.$element.trigger($.Event('loaded'));
 		}
@@ -666,7 +668,7 @@
 		}
 		
 		, getHeader: function() {
-			var header = this.$element.find('.table-header')[0];
+			var header = this.$element.find('.' + this.headerClassName)[0];
 			return $(header);
 		}
 		

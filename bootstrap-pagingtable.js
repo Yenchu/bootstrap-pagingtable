@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.3.3
+ * bootstrap-pagingtable.js v0.3.4
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -50,9 +50,10 @@
 		
 	PagingTable.prototype.init = function(element, options) {
 		this.namespace = compName;
+		this.headerClassName = 'table-header';
+		this.pagerClassName = 'table-pager';
 		this.$element = $(element);
 		this.setOptions(options);
-		//this.rowDataMap = {}; // try to replace rowDataMap with rowDataSet
 		this.rowDataSet = [], this.selRowIds = [], this.keyName, this.editedRowId, this.newRowId, this.optionsUrlCache = {};
 		this.page = 0, this.pageSize = 0, this.totalPages = 0, this.totalRecords = 0, this.sortCol, this.sortDir;
 		
@@ -158,12 +159,12 @@
 			var $th = $('<th/>', attrs).append(thContent);
 			$tr.append($th);
 		}
-		$('<thead class="table-header"/>').html($tr).appendTo(this.$element);
+		$('<thead class="' + this.headerClassName + '"/>').html($tr).appendTo(this.$element);
 	};
 	
 	PagingTable.prototype.createPager = function() {
 		var pagerElemName = this.options.pagerLocation === 'top' ? 'thead' : 'tfoot';
-		var $pager = $('<' + pagerElemName + ' />', {'class': 'table-pager'});
+		var $pager = $('<' + pagerElemName + ' />', {'class': this.pagerClassName});
 		
 		// check pager location: thead or tfoot
 		var isDropup;
@@ -225,9 +226,9 @@
 	PagingTable.prototype.loadData = function() {
 		var options = this.options;
 		if (options.localData) {
+			this.parseData(options.localData);
 			var e = $.Event('localLoaded');
 			this.$element.trigger(e);
-			!e.isDefaultPrevented() && this.parseData(options.localData);
 		} else {
 			this.loadRemoteData();
 		}
@@ -541,11 +542,11 @@
 			}
 			$tbody.html(tbodyContent);
 			
-			var $pagingBar = $('.paging-bar');
+			var $pagingBar = $('.' + this.pagerClassName);
 			$pagingBar.hasClass('hide') && $pagingBar.removeClass('hide');
 		} else {
 			$tbody.html(this.options.texts.noDataMsg);
-			$('.paging-bar').addClass('hide');
+			$('.' + this.pagerClassName).addClass('hide');
 		}
 		this.$element.trigger($.Event('loaded'));
 	};
@@ -697,7 +698,7 @@
 	};
 	
 	PagingTable.prototype.getHeader = function() {
-		var header = this.$element.find('.table-header')[0];
+		var header = this.$element.find('.' + this.headerClassName)[0];
 		return $(header);
 	};
 	
@@ -818,12 +819,6 @@
 	};
 	
 	PagingTable.prototype.setRowData = function(rowDataSet) {
-		/*this.rowDataMap = {};
-		for (var i = 0, len = rowDataSet.length; i < len; i++) {
-			var rowData = rowDataSet[i];
-			var key = rowData[this.keyName];
-			this.rowDataMap[key] = rowData;
-		}*/
 		this.rowDataSet = rowDataSet;
 	};
 	
@@ -832,17 +827,10 @@
 	};
 	
 	PagingTable.prototype.addRowData = function(rowData) {
-		//this.rowDataMap[rowId] = rowData;
 		this.rowDataSet.push(rowData);
 	};
 	
 	PagingTable.prototype.removeRowData = function(rowId) {
-		/*for(var key in this.rowDataMap) {
-			if (rowId == key) {
-				delete this.rowDataMap[key];
-				break;
-			}
-		}*/
 		for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
 			var rowData = this.rowDataSet[i];
 			var key = rowData[this.keyName];
@@ -854,7 +842,6 @@
 	};
 	
 	PagingTable.prototype.getRowData = function(rowId) {
-		//return this.rowDataMap[rowId];
 		for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
 			var rowData = this.rowDataSet[i];
 			var key = rowData[this.keyName];
@@ -866,12 +853,6 @@
 	};
 	
 	PagingTable.prototype.getAllRowData = function() {
-		/*var rowDataSet = [];
-		for(var key in this.rowDataMap) {
-			var rowData = this.rowDataMap[key];
-			rowDataSet.push(rowData);
-		}
-		return rowDataSet;*/
 		return this.rowDataSet;
 	};
 	
