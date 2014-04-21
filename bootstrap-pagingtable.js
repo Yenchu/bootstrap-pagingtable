@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v0.3.4
+ * bootstrap-pagingtable.js v0.3.5
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -16,6 +16,7 @@
 	
 	PagingTable.DEFAULTS = {
 		classes: {hover:'info', highlight:'success'}
+	 	, selectByCheckbox: false
 		, pageSizeOptions: [10, 20, 50]
 		, pagerLocation: 'bottom'
 		, paramNames: {page:'page', pageSize:'pageSize', records:'records', totalRecords:'totalRecords', sort:'sort', sortDir:'sortDir'}
@@ -29,13 +30,11 @@
 			, submitButton:'Submit'
 			, cancelButton:'Cancel'}
 		, pagerTemplate: '<span>View {{fromRecord}} - {{toRecord}} of {{totalRecords}} {{pageSize}} per page</span><span class="pull-right">{{firstButton}}{{prevButton}} Page {{currentPage}} of {{totalPages}} {{nextButton}}{{lastButton}}</span>'
-		, firstButtonTemplate: '<a class="btn btn-primary goto-first-page"><span class="glyphicon glyphicon-fast-backward" /></a>'
-		, prevButtonTemplate: '<a class="btn btn-primary goto-prev-page"><span class="glyphicon glyphicon-backward" /></a>'
-		, nextButtonTemplate: '<a class="btn btn-primary goto-next-page"><span class="glyphicon glyphicon-forward" /></a>'
-		, lastButtonTemplate: '<a class="btn btn-primary goto-last-page"><span class="glyphicon glyphicon-fast-forward" /></a>'
-		, gotoPageTemplate: '<input type="text" class="input-sm col-md-6 paging-value" placeholder="gotoPage">'
-			+ ' <button type="button" class="btn btn-primary btn-sm paging-confirm"><span class="glyphicon glyphicon-ok" /></button>'
-			+ ' <button type="button" class="btn btn-sm paging-cancel"><span class="glyphicon glyphicon-remove" /></button>'
+		, firstButtonTemplate: '<a class="btn btn-primary btn-sm first-page"><span class="glyphicon glyphicon-fast-backward" /></a>'
+		, prevButtonTemplate: '<a class="btn btn-primary btn-sm prev-page"><span class="glyphicon glyphicon-backward" /></a>'
+		, nextButtonTemplate: '<a class="btn btn-primary btn-sm next-page"><span class="glyphicon glyphicon-forward" /></a>'
+		, lastButtonTemplate: '<a class="btn btn-primary btn-sm last-page"><span class="glyphicon glyphicon-fast-forward" /></a>'
+		, currentPageTemplate: '<input type="text" class="input-sm current-page" size="4" maxlength="4">'
 		, editingModalTemplate: '<div class="modal fade editing-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content">'
 			+ '<div class="modal-header">'
 			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'
@@ -135,6 +134,11 @@
 	PagingTable.prototype.createHeader = function() {
 		var colLen = this.colModels.length;
 		var $tr = $('<tr/>');
+		if (this.options.selectByCheckbox) {
+			var selAllCheckbox = this.options.isMultiSelect ? '<input type="checkbox" class="select-all">' : '';
+			$tr.append('<th>' + selAllCheckbox + '</th>');
+		}
+		
 		for (var i = 0; i < colLen; i++) {
 			var colModel = this.colModels[i];
 			if (colModel.hidden) {
@@ -180,11 +184,12 @@
 		for (var i = 0, len = this.colModels.length; i < len; i++) {
 			!this.colModels[i].hidden && colspan++;
 		}
+		this.options.selectByCheckbox && colspan++;
+		
 		var tr = '<tr><td colspan="' + colspan + '">' + this.getPagerContent(this.options.pagerTemplate, isDropup) + '</td></tr>';
 		$pager.html(tr);
 		
 		this.setPageSizeElement();
-		this.setGotoPageElement();
 	};
 	
 	PagingTable.prototype.getPagerContent = function(tpl, isDropup) {
@@ -193,12 +198,14 @@
 		tpl = tpl.replace('{{toRecord}}', '<span class="to-record"></span>');
 		tpl = tpl.replace('{{totalRecords}}', '<span class="total-records"></span>');
 		
-		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '"><a class="btn dropdown-toggle page-size" data-toggle="dropdown"><span class="page-size-value"></span> <span class="caret"></span></a><ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
+		tpl = tpl.replace('{{pageSize}}', ' <div class="btn-group' + dropup + '">' 
+				+ '<a class="btn dropdown-toggle page-size" data-toggle="dropdown"><span class="page-size-value"></span> <span class="caret"></span></a>'
+				+ '<ul class="dropdown-menu page-size-options" role="menu"></ul></div>');
 	
 		tpl = tpl.replace('{{firstButton}}', '<span class="btn-group">' + this.options.firstButtonTemplate);
 		tpl = tpl.replace('{{prevButton}}', this.options.prevButtonTemplate + '</span>');
 		
-		tpl = tpl.replace('{{currentPage}}', '<div class="btn-group' + dropup + '"><a class="btn dropdown-toggle current-page" data-toggle="dropdown"><span class="current-page-value"></span> <span class="caret"></span></a><div class="dropdown-menu goto-page" role="menu"></div></div>');
+		tpl = tpl.replace('{{currentPage}}', this.options.currentPageTemplate);
 		tpl = tpl.replace('{{totalPages}}', '<span class="total-pages"></span>');
 		
 		tpl = tpl.replace('{{nextButton}}', '<span class="btn-group">' + this.options.nextButtonTemplate);
@@ -213,14 +220,6 @@
 			sizeOptions += '<li><a>' + options.pageSizeOptions[i] + '</a></li>';
 		}
 		this.$element.find('.page-size-options').html(sizeOptions);
-	};
-	
-	PagingTable.prototype.setGotoPageElement = function() {
-		this.$element.find('.goto-page').html(this.options.gotoPageTemplate);
-	};
-	
-	PagingTable.prototype.hideGotoPageElement = function() {
-		$('.current-page').dropdown('toggle');
 	};
 	
 	PagingTable.prototype.loadData = function() {
@@ -329,7 +328,8 @@
 
 		$(document).off('click.' + ns).on('click.' + ns, function(e) {
 			if (that.isBlur(e)) {
-				that.clearSelectedRow();
+				// unselect rows if not selectByCheckbox enabling
+				!options.selectByCheckbox && that.removeSelectedRows();
 				var e = $.Event('blur');
 				that.$element.trigger(e);
 			}
@@ -348,6 +348,10 @@
 		
 		$element.off('click.th.' + ns).on('click.th.' + ns, 'th', function() {
 			var colName = $(this).attr('name');
+			if (!colName) {
+				return;
+			}
+			
 			var colModel = that.getColModel(colName);
 			if (colModel.sortable) {
 				that.sort(colName);
@@ -356,11 +360,14 @@
 		});
 		
 		$element.off('click.tr.' + ns).on('click.tr.' + ns, 'tbody tr', function(e) {
-			var $this = $(this);
-			if (!that.isSelectedRow($this)) {
-				options.isMultiSelect ? that.selectRows($this, e) : that.selectRow($this, e);
-			} else {
-				that.selectRow($this, e);
+			// select row if not selectByCheckbox enabling
+			if (!options.selectByCheckbox) {
+				var $this = $(this);
+				if (!that.isSelectedRow($this)) {
+					options.isMultiSelect ? that.selectRows($this, e) : that.selectRow($this);
+				} else {
+					that.selectRow($this);
+				}
 			}
 			$element.trigger({type:'clickRow', rowId:that.getRowId($(this)), orignEvent:e});
 		});
@@ -379,33 +386,59 @@
 		$element.off('mouseleave.tr.' + ns).on('mouseleave.tr.' + ns, 'tbody tr', function() {
 			$(this).removeClass(options.classes.hover);
 		});
+		
+		if (options.selectByCheckbox) {
+			if (options.isMultiSelect) {
+				$element.off('change.select-all.' + ns).on('change.select-all.' + ns, '.select-all', function(e) {
+					var checked = $(this).prop('checked');
+					if (checked) {
+						var $rows = that.getRows();
+						that.addSelectedRows($rows);
+					} else {
+						that.removeSelectedRows();
+					}
+				});
+			}
+			$element.off('change.select-one.' + ns).on('change.select-one.' + ns, '.select-one', function(e) {
+				var $tr = $(this).parents('tr');
+				var checked = $(this).prop('checked');
+				if (checked) {
+					if (!options.isMultiSelect) {
+						that.removeSelectedRows();
+					}
+					that.addSelectedRow($tr);
+				} else {
+					that.removeSelectedRow($tr);
+				}
+			});
+		}
 	};
 	
 	PagingTable.prototype.addPagingEventHandlers = function() {
 		var that = this, $element = this.$element, ns = this.namespace;
 		
-		$element.off('click.first-page.' + ns).on('click.first-page.' + ns, '.goto-first-page', function() {
+		$element.off('click.first-page.' + ns).on('click.first-page.' + ns, '.first-page', function() {
 			if (that.page <= 0) {
 				return;
 			}
 			that.page = 0;
 			that.reload();
 		});
-		$element.off('click.prev-page.' + ns).on('click.prev-page.' + ns, '.goto-prev-page', function() {
+		$element.off('click.prev-page.' + ns).on('click.prev-page.' + ns, '.prev-page', function() {
 			if (that.page <= 0) {
 				return;
 			}
 			that.page -= 1;
 			that.reload();
 		});
-		$element.off('click.next-page.' + ns).on('click.next-page.' + ns, '.goto-next-page', function() {
+		$element.off('click.next-page.' + ns).on('click.next-page.' + ns, '.next-page', function() {
 			if (that.page >= that.totalPages - 1) {
 				return;
 			}
 			that.page += 1;
 			that.reload();
 		});
-		$element.off('click.last-page.' + ns).on('click.last-page.' + ns, '.goto-last-page', function() {
+		$element.off('click.last-page.' + ns).on('click.last-page.' + ns, '.last-page', function() {
 			if (that.page >= that.totalPages - 1) {
 				return;
 			}
@@ -413,36 +446,23 @@
 			that.reload();
 		});
 		
-		$element.off('click.goto-page-value.' + ns).on('click.goto-page-value.' + ns, '.paging-value', function(e) {
-			e.stopPropagation();
-		});
-		$element.off('keyup.goto-page-value.' + ns).on('keyup.goto-page-value.' + ns, '.paging-value', function(e) {
+		$element.off('keyup.page-changed.' + ns).on('keyup.page-changed.' + ns, '.current-page', function(e) {
 			e.stopPropagation();
 			var key = e.charCode || e.keyCode;
 			if (key === 13) {
-				$element.find('.paging-confirm').trigger('click.goto-page-confirmed.' + that.namespace);
+				var pageNo = parseInt($element.find('.current-page').val());
+				if (!pageNo || pageNo === that.page + 1) {
+					$element.find('.current-page').val((that.page + 1));
+					return;
+				}
+				
+				pageNo = (pageNo > that.totalPages ? that.totalPages : pageNo);
+				pageNo = (pageNo < 1 ? 1 : pageNo);
+				that.page = pageNo - 1;
+				that.reload();
 			} else if (key === 27) {
-				that.hideGotoPageElement();
+				$element.find('.current-page').val((that.page + 1));
 			}
-		});
-		$element.off('click.goto-page-confirmed.' + ns).on('click.goto-page-confirmed.' + ns, '.paging-confirm', function(e) {
-			e.stopPropagation();
-			var pageNo = parseInt($element.find('.paging-value').val());
-			if (!pageNo || pageNo === that.page + 1) {
-				that.hideGotoPageElement();
-				return;
-			}
-			
-			pageNo = (pageNo > that.totalPages ? that.totalPages : pageNo);
-			pageNo = (pageNo < 1 ? 1 : pageNo);
-			that.page = pageNo - 1;
-			that.hideGotoPageElement();
-			that.reload();
-			$element.find('.paging-value').val('');
-		});
-		$element.off('click.goto-page-cancelled.' + ns).on('click.goto-page-cancelled.' + ns, '.paging-cancel', function(e) {
-			e.stopPropagation();
-			that.hideGotoPageElement();
 		});
 		
 		$element.off('click.page-size-changed.' + ns).on('click.page-size-changed.' + ns, '.page-size-options li a', function() {
@@ -461,24 +481,24 @@
 	PagingTable.prototype.updatePagingButtons = function() {
 		var $element = this.$element, page = this.page, totalPages = this.totalPages;
 		if (page <= 0) {
-			$element.find('.goto-first-page').toggleClass('disabled', true).css('cursor', 'default');
-			$element.find('.goto-prev-page').toggleClass('disabled', true).css('cursor', 'default');
+			$element.find('.first-page').toggleClass('disabled', true).css('cursor', 'default');
+			$element.find('.prev-page').toggleClass('disabled', true).css('cursor', 'default');
 		} else {
-			$element.find('.goto-first-page').removeClass('disabled').css('cursor', 'pointer');
-			$element.find('.goto-prev-page').removeClass('disabled').css('cursor', 'pointer');
+			$element.find('.first-page').removeClass('disabled').css('cursor', 'pointer');
+			$element.find('.prev-page').removeClass('disabled').css('cursor', 'pointer');
 		}
 		if (page >= totalPages - 1) {
-			$element.find('.goto-next-page').toggleClass('disabled', true).css('cursor', 'default');
-			$element.find('.goto-last-page').toggleClass('disabled', true).css('cursor', 'default');
+			$element.find('.next-page').toggleClass('disabled', true).css('cursor', 'default');
+			$element.find('.last-page').toggleClass('disabled', true).css('cursor', 'default');
 		} else {
-			$element.find('.goto-next-page').removeClass('disabled').css('cursor', 'pointer');
-			$element.find('.goto-last-page').removeClass('disabled').css('cursor', 'pointer');
+			$element.find('.next-page').removeClass('disabled').css('cursor', 'pointer');
+			$element.find('.last-page').removeClass('disabled').css('cursor', 'pointer');
 		}
 	};
 
 	PagingTable.prototype.updatePagingElements = function() {
 		var $element = this.$element, page = this.page, totalPages = this.totalPages, pageSize = this.pageSize, totalRecords = this.totalRecords;
-		$element.find('.current-page-value').text((page + 1));
+		$element.find('.current-page').val((page + 1));
 		$element.find('.total-pages').text(totalPages);
 		
 		var fromRecord = page * pageSize + 1;
@@ -494,7 +514,7 @@
 	
 	PagingTable.prototype.load = function() {
 		// clear ant cached selected rows
-		this.clearSelectedRow();
+		this.removeSelectedRows();
 		
 		var rowDataSet = this.getAllRowData();
 		var e = $.Event('load');
@@ -504,11 +524,11 @@
         	return;
         }
 		
-        // clear old data if existed
         var tbody = this.$element.find('tbody')[0];
+        
+        // clear old data if existed
 		var $tbody = tbody ? $(tbody).empty() : $('<tbody/>').appendTo(this.$element);
 		
-		// hide pager if no any records
 		var rowLen = rowDataSet.length;
 		if (rowLen > 0) {
 			// update pager if pageable
@@ -529,6 +549,10 @@
 				var id = rowData[this.keyName];
 				
 				tbodyContent += '<tr id="' + id + '">';
+				if (this.options.selectByCheckbox) {
+					tbodyContent += '<td><input type="checkbox" class="select-one"></td>';
+				}
+				
 				for (var j = 0; j < colLen; j++) {
 					var colModel = this.colModels[j];
 					if (colModel.hidden) {
@@ -545,6 +569,7 @@
 			var $pagingBar = $('.' + this.pagerClassName);
 			$pagingBar.hasClass('hide') && $pagingBar.removeClass('hide');
 		} else {
+			// hide pager if no any records
 			$tbody.html(this.options.texts.noDataMsg);
 			$('.' + this.pagerClassName).addClass('hide');
 		}
@@ -633,20 +658,26 @@
 			return '';
 		}
 
+		// display data with select options(key:value)
 		var options = this.getColOptions(colModel);
+		
 		if ($.isArray(colVal)) {
 			if (colVal.length < 1) {
 				return '';
 			}
 			
-			var rtVals = [];
-			var isObj = colVal[0] instanceof Object ? true : false;
-			
 			// subName is used to specify the field in sub model you want to get
 			// if no subName, default is 'id' for options case, otherwise, it's 'name'
 			var subName = colModel['subName'] || options ? 'id' : 'name';
+
+			var isObj = colVal[0] instanceof Object ? true : false;
+			
+			var rtVals = [];
 			for (var i = 0, len = colVal.length; i < len; i++) {
+				// if it's object, get value from its field
 				var rtVal = isObj ? colVal[i][subName] : colVal[i];
+				
+				// if it's options, get value by key
 				if (options) {
 					rtVals.push(options[rtVal] || rtVal);
 				} else {
@@ -655,6 +686,7 @@
 			}
 			return rtVals.join('<br/>');
 		}
+		
 		if (options) {
 			return options[colVal] || colVal;
 		}
@@ -663,8 +695,9 @@
 	
 	PagingTable.prototype.getColValue = function(rowData, colModel) {
 		if (colModel.name.indexOf('.') >= 0) {
-			var names = colModel.name.split('.');
-			var data = rowData[names[0]];
+			var names = colModel.name.split('.'); // eg: a.b.c
+			var data = rowData[names[0]]; // eg: {b:{c:'...'}}
+			// get target data recursively
 			for (var i = 1, len = names.length; i < len; i++) {
 				data = data[names[i]];
 			}
@@ -702,8 +735,8 @@
 		return $(header);
 	};
 	
-	PagingTable.prototype.selectRow = function($selRow, e) {
-		this.clearSelectedRow();
+	PagingTable.prototype.selectRow = function($selRow) {
+		this.removeSelectedRows();
 		this.addSelectedRow($selRow);
 	};
 	
@@ -717,7 +750,7 @@
 				return;
 			}
 			
-			this.clearSelectedRow();
+			this.removeSelectedRows();
 			var currSelRowId = this.getRowId($selRow);
 			
 			var enabledSelect = false;
@@ -749,37 +782,70 @@
 				}
 			}
 		} else {
-			this.clearSelectedRow();
+			this.removeSelectedRows();
 			this.addSelectedRow($selRow);
 		}
 	};
 	
-	PagingTable.prototype.clearSelectedRow = function() {
+	PagingTable.prototype.removeSelectedRows = function() {
 		if (this.selRowIds.length === 0) {
 			return;
 		}
+
+		if (this.options.selectByCheckbox) {
+			this.options.isMultiSelect && $('.select-all').prop('checked', false);
+		}
+		
 		for (var i = 0, len = this.selRowIds.length; i < len; i++) {
 			var selRowId = this.selRowIds[i];
 			var $row = $('[id="' + selRowId + '"]');
-			$row.removeClass(this.options.classes.highlight);
+			if (this.options.selectByCheckbox) {
+				$('.select-one').prop('checked', false);
+			} else {
+				$row.removeClass(this.options.classes.highlight);
+			}
 		}
 		this.selRowIds = [];
 	};
 	
-	PagingTable.prototype.addSelectedRow = function($row) {
-		this.highlightSelectedRow($row);
+	PagingTable.prototype.removeSelectedRow = function($row) {
+		if (this.selRowIds.length === 0) {
+			return;
+		}
+
+		if (this.options.selectByCheckbox) {
+			this.options.isMultiSelect && $('.select-all').prop('checked', false);
+		}
+		
 		var rowId = this.getRowId($row);
-		this.selRowIds.push(rowId);
-		this.$element.trigger({type:'selectRow', rowId:rowId});
-	};
-	
-	PagingTable.prototype.highlightSelectedRow = function($row) {
-		!$row.hasClass(this.options.classes.highlight) && $row.addClass(this.options.classes.highlight);
-		$row.removeClass(this.options.classes.hover);
+		var idx = -1;
+		for (var i = 0, len = this.selRowIds.length; i < len; i++) {
+			var selRowId = this.selRowIds[i];
+			if (selRowId === rowId) {
+				idx = i;
+				if (this.options.selectByCheckbox) {
+					$row.find('.select-one').prop('checked', false);
+				} else {
+					$row.removeClass(this.options.classes.highlight);
+				}
+				break;
+			}
+		}
+		if (idx >= 0) {
+			this.selRowIds.splice(idx, 1);
+		};
 	};
 	
 	PagingTable.prototype.isSelectedRow = function($row) {
 		var rowId = this.getRowId($row);
+		return this.isSelectedRowId(rowId);
+	};
+	
+	PagingTable.prototype.isSelectedRowId = function(rowId) {
+		if (this.selRowIds.length === 0) {
+			return false;
+		}
+		
 		for (var i = 0, len = this.selRowIds.length; i < len; i++) {
 			var selRowId = this.selRowIds[i];
 			if (selRowId === rowId) {
@@ -787,6 +853,30 @@
 			}
 		}
 		return false;
+	};
+	
+	PagingTable.prototype.addSelectedRows = function($rows) {
+		for (var i = 0, len = $rows.length; i < len; i++) {
+			var $row = $rows[i];
+			this.addSelectedRow($row);
+		}
+	};
+	
+	PagingTable.prototype.addSelectedRow = function($row) {
+		if (this.options.selectByCheckbox) {
+			$row.find('.select-one').prop('checked', true);
+		} else {
+			this.highlightSelectedRow($row);
+		}
+		
+		var rowId = this.getRowId($row);
+		!this.isSelectedRowId(rowId) && this.selRowIds.push(rowId);
+		this.$element.trigger({type:'selectRow', rowId:rowId});
+	};
+	
+	PagingTable.prototype.highlightSelectedRow = function($row) {
+		!$row.hasClass(this.options.classes.highlight) && $row.addClass(this.options.classes.highlight);
+		$row.removeClass(this.options.classes.hover);
 	};
 	
 	PagingTable.prototype.getRow = function(rowId) {
@@ -800,6 +890,16 @@
 		return null;
 	};
 	
+	PagingTable.prototype.getRows = function() {
+		var $rows = [];
+		var rowElems = this.$element.find('tbody tr');
+		for (var i = 0, len = rowElems.length; i < len; i++) {
+			var $row = $(rowElems[i]);
+			$rows.push($row);
+		}
+		return $rows;
+	};
+	
 	PagingTable.prototype.getFirstRow = function() {
 		var rowElem = this.$element.find('tbody tr:first-child');
 		return $(rowElem);
@@ -807,6 +907,16 @@
 	
 	PagingTable.prototype.getRowId = function($row) {
 		return $row.attr('id');
+	};
+	
+	PagingTable.prototype.getRowIds = function() {
+		var rowIds = [];
+		for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
+			var rowData = this.rowDataSet[i];
+			var id = rowData[this.keyName];
+			rowIds.push(id);
+		}
+		return rowIds;
 	};
 	
 	PagingTable.prototype.getSelectedRowId = function() {

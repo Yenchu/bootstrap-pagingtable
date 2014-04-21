@@ -1,12 +1,3 @@
-.goto-page {
-  padding: 6px;
-}
-
-.goto-page input {
-  margin-bottom: 0;
-  margin-right: 2px;
-}
-
 .sort-desc {
   border-top: 0;
   border-bottom: 4px solid #000000;

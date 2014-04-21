@@ -69,6 +69,7 @@ pageSizeOptions         |array       |10, 20, 50      |To set how many records s
 pagerLocation           |string      |bottom          |To set pager location (`top` or `bottom`).
 paramNames              |object      |                |Parameter names which are used to send to remote server.
 remote                  |object      |null            |Settings related to remote server.
+selectByCheckbox        |boolean     |false           |To enable selecting row by checkbox.
 
 ### paramNames
 
