@@ -15,6 +15,7 @@
   };
   
   PagingTable.DEFAULTS = {
+    // use Boostrap class names by default
     classes: {hover:'info', highlight:'success'}
     , selectByCheckbox: false
     , pageSizeOptions: [10, 20, 50]
@@ -178,6 +179,15 @@
     $('<thead class="' + this.headerClassName + '"/>').html($tr).appendTo(this.$element);
   };
   
+  PagingTable.prototype.getColSpan = function() {
+    var colspan = 0;
+    for (var i = 0, len = this.colModels.length; i < len; i++) {
+      !this.colModels[i].hidden && colspan++;
+    }
+    this.options.selectByCheckbox && colspan++;
+    return colspan;
+  };
+  
   PagingTable.prototype.createPager = function() {
     var pagerElemName = this.options.pagerLocation === 'top' ? 'thead' : 'tfoot';
     var $pager = $('<' + pagerElemName + ' />', {'class': this.pagerClassName});
@@ -196,17 +206,9 @@
     this.setPageSizeElement();
   };
   
-  PagingTable.prototype.getColSpan = function() {
-    var colspan = 0;
-    for (var i = 0, len = this.colModels.length; i < len; i++) {
-      !this.colModels[i].hidden && colspan++;
-    }
-    this.options.selectByCheckbox && colspan++;
-    return colspan;
-  };
-  
+  // use 'div' to create pager instead of 'tfoot'
   /*PagingTable.prototype.createPager = function() {
-    var $pager = $('<span />', {'class': this.pagerClassName});
+    var $pager = $('<div />', {'class': this.pagerClassName});
     $pager.appendTo(this.$pagerParent);
     $pager.html(this.getPagerContent(this.options.pagerTemplate));
     
@@ -630,7 +632,7 @@
     this.$element.trigger($.Event('loaded'));
   };
   
-  PagingTable.prototype.createRowContent = function(rowData, woRow) {
+  PagingTable.prototype.createRowContent = function(rowData, woTr) {
     var rowContent = '';
     if (this.options.selectByCheckbox) {
       rowContent += '<td><input type="checkbox" class="select-one"></td>';
@@ -646,7 +648,7 @@
       rowContent += '<td>' + tdContent + '</td>';
     }
     
-    !woRow && (rowContent = '<tr id="' + rowData[this.keyName] + '">' + rowContent + '</tr>');
+    !woTr && (rowContent = '<tr id="' + rowData[this.keyName] + '">' + rowContent + '</tr>');
     return rowContent;
   };
   
@@ -1027,10 +1029,10 @@
     return this.rowDataSet.length > 0 ? true : false;
   };
   
-  PagingTable.prototype.addRowData = function(rowData, notRefreshUi) {
+  PagingTable.prototype.addRowData = function(rowData, woRefreshUi) {
     this.rowDataSet.push(rowData);
     
-    if (!notRefreshUi) {
+    if (!woRefreshUi) {
       var tbody = this.$element.find('tbody')[0];
       var $tbody = $(tbody);
       var rowContent = this.createRowContent(rowData);
@@ -1038,7 +1040,7 @@
     }
   };
   
-  PagingTable.prototype.removeRowData = function(rowId, notRefreshUi) {
+  PagingTable.prototype.removeRowData = function(rowId, woRefreshUi) {
     var found = false;
     for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
       var rowData = this.rowDataSet[i];
@@ -1050,14 +1052,14 @@
       }
     }
     
-    if (!notRefreshUi && found) {
+    if (!woRefreshUi && found) {
       var $row = this.getRow(rowId);
       $row.remove();
     }
     return found;
   };
   
-  PagingTable.prototype.updateRowData = function(newRowData, notRefreshUi) {
+  PagingTable.prototype.updateRowData = function(newRowData, woRefreshUi) {
     var found = false;
     var rowId = newRowData[this.keyName];
     for (var i = 0, len = this.rowDataSet.length; i < len; i++) {
@@ -1071,7 +1073,7 @@
     }
     
     // update ui
-    if (!notRefreshUi && found) {
+    if (!woRefreshUi && found) {
       var rowContent = this.createRowContent(newRowData, true);
       var $row = this.getRow(rowId);
       $row.html(rowContent);
