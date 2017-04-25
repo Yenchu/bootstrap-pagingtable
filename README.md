@@ -9,9 +9,6 @@ bootstrap-pagingtable.js is a jQuery plugin for Twitter Bootstrap that renders d
 * [Bootstrap](http://twitter.github.com/bootstrap/index.html) v3.0+
   (bootstrap-v2-pagingtable.js is for Bootstrap v2)
 
-## Demo
-
-[Demo site](http://samples-yenchu.rhcloud.com/pagingtable)
 
 ## Usage
 
@@ -21,9 +18,8 @@ Include required css and js files:
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 
-Include pagingtable css and js files:
+Include pagingtable js files:
 
-    <link href="bootstrap-pagingtable.css" rel="stylesheet">
     <script src="bootstrap-pagingtable.js"></script>
 
 Create a place holder in your HTML page:
@@ -87,7 +83,7 @@ formatter               |function           |null            |To custom content 
 header                  |string             |null            |The table header for this column.
 hidden                  |boolean            |false           |To hide this column.
 isHiddenField           |boolean            |false           |To use a hidden field to keep column value and send back to server after editing.
-key                     |boolean            |false           |To be used as unique row id if no `name` property is `id` in data. 
+key                     |boolean            |false           |To be used as unique row id if no `name` property is `id` in data.
 name                    |string             |null            |The `name` property in data.
 options                 |object             |null            |To be used to display label when column type is select, radio or checkbox.
 optionsUrl              |string             |null            |Using ajax to load data to be used to display label when column type is select, radio or checkbox.
@@ -126,10 +122,10 @@ isRest                  |boolean     |false           |The `editUrl` and `delete
 
 .pagingtable('updateRow', rowId)
 
-.pagingtable('deleteRow', {id:'id or key column', 
-                           displayColName:'column to display in confirm modal', 
-                           separator:'to separate multiple row IDs, default is `,`', 
-                           paramName:'parameter to be sent to server, default is `id or key name`', 
+.pagingtable('deleteRow', {id:'id or key column',
+                           displayColName:'column to display in confirm modal',
+                           separator:'to separate multiple row IDs, default is `,`',
+                           paramName:'parameter to be sent to server, default is `id or key name`',
                            method:'HTTP method, default is `POST`'})
 (`separator`, `paramName` and `method` are ignored when `remote.isRest` is true)
 

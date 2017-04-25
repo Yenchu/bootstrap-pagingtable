@@ -1,5 +1,5 @@
 /* ===================================================
- * bootstrap-pagingtable.js v1.0.0
+ * bootstrap-pagingtable.js v1.1.0
  * https://github.com/Yenchu/bootstrap-pagingtable
  * =================================================== */
 
@@ -20,7 +20,7 @@
     , selectByCheckbox: false
     , pageSizeOptions: [10, 20, 50]
     , pagerLocation: 'bottom'
-    , paramNames: {page:'page', pageSize:'pageSize', records:'records', totalRecords:'totalRecords', sort:'sort', sortDir:'sortDir'}
+    , paramNames: {records:'records', totalRecords:'totalRecords', page:'page', pageSize:'pageSize', totalPages:'totalPages', sort:'sort', sortDir:'sortDir'}
     , sortDir: {asc:'asc', desc:'desc'}
     , texts: {
       noDataMsg:'No Data'
@@ -41,10 +41,10 @@
       + '<span class="input-group-addon" style="background-color:#fff;border:0"> Page </span>{{currentPage}}'
       + '<span class="input-group-addon"style="background-color:#fff;border:0"> of {{totalPages}} </span>'
       + '<span class="input-group-btn">{{nextButton}}{{lastButton}}</sapn></span></span></span>'
-    , firstButtonTemplate: '<a class="btn btn-primary btn-sm first-page"><span class="glyphicon glyphicon-fast-backward" /></a>'
-    , prevButtonTemplate: '<a class="btn btn-primary btn-sm prev-page"><span class="glyphicon glyphicon-backward" /></a>'
-    , nextButtonTemplate: '<a class="btn btn-primary btn-sm next-page"><span class="glyphicon glyphicon-forward" /></a>'
-    , lastButtonTemplate: '<a class="btn btn-primary btn-sm last-page"><span class="glyphicon glyphicon-fast-forward" /></a>'
+    , firstButtonTemplate: '<a class="btn btn-primary btn-sm first-page"><i class="fa fa-fast-backward"></i></a>'
+    , prevButtonTemplate: '<a class="btn btn-primary btn-sm prev-page"><i class="fa fa-backward"></i></a>'
+    , nextButtonTemplate: '<a class="btn btn-primary btn-sm next-page"><i class="fa fa-forward"></i></a>'
+    , lastButtonTemplate: '<a class="btn btn-primary btn-sm last-page"><i class="fa fa-fast-forward"></i></a>'
     , currentPageTemplate: '<input type="text" class="input-sm current-page" size="4" maxlength="4">'
     , editingModalTemplate: '<div class="modal fade editing-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content">'
       + '<div class="modal-header">'
@@ -55,7 +55,7 @@
       + '<button type="button" class="btn btn-default editing-cancel" data-dismiss="modal"></button>'
       + '<button type="button" class="btn btn-primary editing-submit" data-dismiss="modal"></button>'
       + '</div></div></div></div>'
-    , loadingSpinnerTemplate: '<div class="loading-spinner" />'
+    , loadingSpinnerTemplate: '<span class="loading-spinner"><i class="fa fa-spinner fa-spin"></i></span>'
   };
     
   PagingTable.prototype.init = function(element, options) {
@@ -68,6 +68,9 @@
     this.setOptions(options);
     this.rowDataSet = [], this.selRowIds = [], this.keyName, this.editedRowId, this.newRowId, this.optionsUrlCache = {};
     this.page = 0, this.pageSize = 0, this.totalPages = 0, this.totalRecords = 0, this.sortCol, this.sortDir;
+    
+    // customize crud functions
+    this.dataLoader, this.dataSaver, this.dataRemover;
     
     this.createTable();
     
@@ -245,7 +248,7 @@
   PagingTable.prototype.loadData = function() {
     var options = this.options;
     if (options.localData) {
-      this.parseData(options.localData);
+      this.parseAndLoad(options.localData);
       var e = $.Event('localLoaded');
       this.$element.trigger(e);
     } else {
@@ -257,18 +260,16 @@
     // clear cache when loading data from remote
     this.optionsUrlCache = {};
     
-    var options = this.options;
     var remote = this.remote;
-    var url = remote.url;
-    var type = remote.method || 'GET';
-    var data = remote.params || {};
-    
+    var params = remote.params || {};
+
+    var options = this.options;
     if (!options.loadOnce && options.isPageable) {
       var paramNames = options.paramNames;
-      data[paramNames.page] = this.page || 0;
-      data[paramNames.pageSize] = this.pageSize || options.pageSizeOptions[0];
-      data[paramNames.sort] = this.sortCol;
-      data[paramNames.sortDir] = this.sortDir;
+      params[paramNames.page] = this.page || 0;
+      params[paramNames.pageSize] = this.pageSize || options.pageSizeOptions[0];
+      params[paramNames.sort] = this.sortCol;
+      params[paramNames.sortDir] = this.sortDir;
     }
     
     var e = $.Event('remoteLoad');
@@ -276,26 +277,54 @@
     if (e.isDefaultPrevented()) {
       return;
     }
+
+    var that = this;
+    that.startLoading();
+    that.doLoadData(
+      params, 
+      function(resp) {
+        var e = $.Event('remoteLoaded');
+        e.response = resp;
+        that.$element.trigger(e);
+        !e.isDefaultPrevented() && that.parseAndLoad(resp);
+      }, 
+      function(jqXHR) {
+        var e = $.Event('remoteLoadError');
+        e.jqXHR = jqXHR;
+        that.$element.trigger(e);
+      }, 
+      function() {
+        that.stopLoading();
+      }
+    );
+  };
+  
+  PagingTable.prototype.doLoadData = function(params, successFun, errorFun, finalFun) {
+    if (this.dataLoader) {
+      this.dataLoader(params, successFun, errorFun, finalFun);
+      return;
+    }
+    
+    var remote = this.remote;
+    var url = remote.url;
+    var type = remote.method || 'GET';
     
     var that = this;
-    this.startLoading();
     $.ajax({
       url: url,
-      data: data,
+      data: params,
       type: type
     }).always(function() {
-      that.stopLoading();
+      finalFun && finalFun();
     }).done(function(resp) {
-      e = $.Event('remoteLoaded');
-      e.response = resp;
-      that.$element.trigger(e);
-      !e.isDefaultPrevented() && that.parseData(resp);
-    }).fail(function(jqXHR) {
-      e = $.Event('remoteLoadError');
-      e.jqXHR = jqXHR;
-      that.$element.trigger(e);
-      $.error('Loading data from remote failed!');
+      successFun && successFun(resp);
+    }).fail(function(resp) {
+      errorFun && errorFun(resp);
     });
+  };
+  
+  PagingTable.prototype.setDataLoader = function(func) {
+    this.dataLoader = func;
   };
   
   PagingTable.prototype.startLoading = function() {
@@ -308,6 +337,7 @@
     var h = $element.height() / 2 - $loadindSpinner.height() / 2;
     var x = $element.offset().left + w;
     var y = $element.offset().top + h;
+    //console.log('x=' + x + ', y=' + y + ', w=' + w + ', h=' + h);
     $loadindSpinner.offset({top:y, left:x});
   };
   
@@ -320,26 +350,30 @@
   PagingTable.prototype.parseData = function(json) {
     var options = this.options;
     var paramNames = options.paramNames;
-    var rowDataSet = json[paramNames.records];
-    if (!rowDataSet) {
-      $.error('The json data format is incorrect!');
-      return;
-    }
-    
-    if (options.isPageable) {
-      this.totalRecords = json[paramNames.totalRecords] || rowDataSet.length;
-      this.pageSize = json[paramNames.pageSize] || this.pageSize || options.pageSizeOptions[0];
-      this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
-      this.page = json[paramNames.page] || this.page || 0;
-      
-      if (this.page < 0) {
-        this.page = 0;
-      } else if (this.page > 0 && this.page >= this.totalPages) {
-        this.page = this.totalPages - 1;
-      }
-    }
+    json = json || {};
+    var rowDataSet = json[paramNames.records] || [];
     
     this.setRowData(rowDataSet);
+    if (options.isPageable) {
+      this.updatePagingInfo(json[paramNames.totalRecords], json[paramNames.page], json[paramNames.pageSize], json[paramNames.totalPages]);
+    }
+  };
+  
+  PagingTable.prototype.updatePagingInfo = function(totalRecords, page, pageSize, totalPages) {
+    this.totalRecords = totalRecords || this.rowDataSet.length;
+    this.page = page || this.page || 0;
+    this.pageSize = pageSize || this.pageSize || this.options.pageSizeOptions[0];
+    this.totalPages = totalPages || Math.ceil(this.totalRecords / this.pageSize);
+    
+    if (this.page < 0) {
+      this.page = 0;
+    } else if (this.page > 0 && this.page >= this.totalPages) {
+      this.page = this.totalPages - 1;
+    }
+  };
+  
+  PagingTable.prototype.parseAndLoad = function(json) {
+    this.parseData(json);
     this.load();
   };
   
@@ -626,7 +660,7 @@
     } else {
       // hide pager if no any records
       var colspan = this.getColSpan();
-      $tbody.html('<tr><td colspan="' + colspan + '">' + this.options.texts.noDataMsg + '</td></tr>');
+      $tbody.html('<tr class="' + (this.options.noDataClass || '') + '"><td colspan="' + colspan + '">' + this.options.texts.noDataMsg + '</td></tr>');
       this.$pagerParent.find('.' + this.pagerClassName).addClass('hide');
     }
     this.$element.trigger($.Event('loaded'));
@@ -658,6 +692,10 @@
     } else {
       this.loadRemoteData();
     }
+  };
+  
+  PagingTable.prototype.clear = function() {
+    this.parseAndLoad({});
   };
   
   PagingTable.prototype.sort = function(sortCol, sortDir) {
@@ -707,10 +745,10 @@
   };
   
   PagingTable.prototype.labelSorted = function($th) {
-    $th.parent().find('span').remove();
+    $th.parent().find('.sort').remove();
     var sortStyle = '';
-    this.sortDir === this.options.sortDir.desc && (sortStyle = ' sort-desc');
-    var label = ' <span class="caret' + sortStyle + '"></span>';
+    this.sortDir === this.options.sortDir.desc && (sortStyle = ' fa-rotate-180');
+    var label = ' <span class="sort"><i class="fa fa-angle-down' + sortStyle + '"></i></span>';
     $th.append(label);
   };
   
@@ -830,6 +868,9 @@
   };
   
   PagingTable.prototype.selectRow = function($selRow) {
+    if (!$selRow) {
+      return;
+    }
     this.removeSelectedRows();
     this.addSelectedRow($selRow);
   };
@@ -892,6 +933,7 @@
     
     for (var i = 0, len = this.selRowIds.length; i < len; i++) {
       var selRowId = this.selRowIds[i];
+      selRowId = selRowId.replace(/(:|\.|\[|\]|,)/g, '\\$1');
       var $row = this.$element.find('#' + selRowId);
       if (this.options.selectByCheckbox) {
         $row.find('.select-one').prop('checked', false);
@@ -903,6 +945,9 @@
   };
   
   PagingTable.prototype.removeSelectedRow = function($row) {
+    if (!$row) {
+      return;
+    }
     if (this.selRowIds.length === 0) {
       return;
     }
@@ -1037,6 +1082,9 @@
       var $tbody = $(tbody);
       var rowContent = this.createRowContent(rowData);
       $tbody.append(rowContent);
+      
+      this.updatePagingInfo();
+      this.updatePagingElements();
     }
   };
   
@@ -1054,7 +1102,10 @@
     
     if (!woRefreshUi && found) {
       var $row = this.getRow(rowId);
-      $row.remove();
+      $row && $row.remove();
+      
+      this.updatePagingInfo();
+      this.updatePagingElements();
     }
     return found;
   };
@@ -1074,9 +1125,11 @@
     
     // update ui
     if (!woRefreshUi && found) {
-      var rowContent = this.createRowContent(newRowData, true);
       var $row = this.getRow(rowId);
-      $row.html(rowContent);
+      if ($row) {
+        var rowContent = this.createRowContent(newRowData, true);
+        $row.html(rowContent);
+      }
     }
     return found;
   };
@@ -1264,8 +1317,9 @@
   };
   
   PagingTable.prototype.doSaveRow = function(rowId, $form) {
+    var isAdding = this.isAddingRow(rowId);
     if (this.options.inlineEditing || this.options.localData) {
-      var rowData = this.isAddingRow(rowId) ? {} : this.getRowData(rowId);
+      var rowData = isAdding ? {} : this.getRowData(rowId);
       for (var i = 0, len = this.colModels.length; i < len; i++) {
         var colModel = this.colModels[i];
         if (colModel.hidden) {
@@ -1275,7 +1329,7 @@
         var newVal = $form.find('[name="' + colModel.name + '"]').val();
         newVal && (rowData[colModel.name] = newVal);
       }
-      this.isAddingRow(rowId) && (this.addRowData(rowData, true));
+      isAdding && (this.addRowData(rowData, true));
     }
     
     if (this.options.inlineEditing) {
@@ -1285,23 +1339,52 @@
     
     if (this.options.localData) {
       // add events for editing local data
-      var e = this.isAddingRow(rowId) ? $.Event('added') : $.Event('updated');
+      var e = isAdding ? $.Event('added') : $.Event('updated');
       e.rowId = rowId;
       this.$element.trigger(e);
       !e.isDefaultPrevented() && this.load();
       return;
     }
     
-    var isRest = this.remote.isRest;
-    var action = this.isAddingRow(rowId) ? 'add' : 'update';
-    
-    var e = $.Event(action);
+    var e = isAdding ? $.Event('add') : $.Event('update');
     e.form = $form;
     this.$element.trigger(e);
     if (e.isDefaultPrevented()) {
       this.loadRemoteData();
       return;
     }
+
+    var that = this;
+    that.startLoading();
+    that.doSaveData(
+      $form, 
+      function(resp) {
+        e = isAdding ? $.Event('added') : $.Event('updated');
+        e.rowId = rowId;
+        e.response = resp;
+        that.$element.trigger(e);
+        !e.isDefaultPrevented() && that.loadRemoteData();
+      }, 
+      function(jqXHR) {
+        e = $.Event(action + 'Error');
+        e.rowId = rowId;
+        e.jqXHR = jqXHR;
+        that.$element.trigger(e);
+      }, 
+      function() {
+        that.stopLoading();
+      }
+    );
+  };
+  
+  PagingTable.prototype.doSaveData = function($form, successFun, errorFun, finalFun) {
+    if (this.dataSaver) {
+      this.dataSaver($form, successFun, errorFun, finalFun);
+      return;
+    }
+
+    var isRest = this.remote.isRest;
+    var action = this.isAddingRow(rowId) ? 'add' : 'update';
     
     var url, type;
     if (isRest) {
@@ -1316,30 +1399,25 @@
       url = $form.attr('action') || this.remote.editUrl;
       type = $form.attr('method') || 'POST';
     }
-
-    var that = this;
+    
     var data = $form.serialize();
     this.remote.params && (data += '&' + $.param(this.remote.params));
-    this.startLoading();
+    
     $.ajax({
       url: url,
       data: data,
       type: type
     }).always(function() {
-      that.stopLoading();
+      finalFun && finalFun();
     }).done(function(resp) {
-      e = that.isAddingRow(rowId) ? $.Event('added') : $.Event('updated');
-      e.rowId = rowId;
-      e.response = resp;
-      that.$element.trigger(e);
-      !e.isDefaultPrevented() && that.loadRemoteData();
-    }).fail(function(jqXHR) {
-      e = $.Event(action + 'Error');
-      e.rowId = rowId;
-      e.jqXHR = jqXHR;
-      that.$element.trigger(e);
-      $.error(action + ' operation failed!');
+      successFun && successFun(resp);
+    }).fail(function(resp) {
+      errorFun && errorFun(resp);
     });
+  };
+  
+  PagingTable.prototype.setDataSaver = function(func) {
+    this.dataSaver = func;
   };
   
   PagingTable.prototype.deleteRow = function(settings) {
@@ -1400,6 +1478,35 @@
       return;
     }
     
+    var that = this;
+    that.startLoading();
+    that.doRemoveData(
+      rowIds, 
+      function(resp) {
+        e = $.Event('deleted');
+        that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
+        e.response = resp;
+        that.$element.trigger(e);
+        !e.isDefaultPrevented() && that.loadRemoteData();
+      }, 
+      function(jqXHR) {
+        e = $.Event('deleteError');
+        that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
+        e.jqXHR = jqXHR;
+        that.$element.trigger(e);
+      }, 
+      function() {
+        that.stopLoading();
+      }
+    );
+  };
+
+  PagingTable.prototype.doRemoveData = function(rowIds, successFun, errorFun, finalFun) {
+    if (this.dataRemover) {
+      this.dataRemover(rowIds, successFun, errorFun, finalFun);
+      return;
+    }
+    
     var url, type;
     var data = this.remote.params || {};
     if (this.remote.isRest) {
@@ -1411,27 +1518,21 @@
       type = settings.method || 'POST';
     }
     
-    var that = this;
-    this.startLoading();
     $.ajax({
       url: url,
       data: data,
       type: type
     }).always(function() {
-      that.stopLoading();
+      finalFun && finalFun();
     }).done(function(resp) {
-      e = $.Event('deleted');
-      that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
-      e.response = resp;
-      that.$element.trigger(e);
-      !e.isDefaultPrevented() && that.loadRemoteData();
-    }).fail(function(jqXHR) {
-      e = $.Event('deleteError');
-      that.options.isMultiSelect ? e.rowIds = rowIds : e.rowId = rowIds[0];
-      e.jqXHR = jqXHR;
-      that.$element.trigger(e);
-      $.error('Delete operation failed!');
+      successFun && successFun(resp);
+    }).fail(function(resp) {
+      errorFun && errorFun(resp);
     });
+  };
+
+  PagingTable.prototype.setRemover = function(func) {
+    this.dataRemover = func;
   };
   
   PagingTable.prototype.addIdToUrl = function(url, id) {
